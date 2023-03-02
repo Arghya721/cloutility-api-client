@@ -2,7 +2,8 @@ package main
 
 /* Copyright 2022-2023 (C) Blue Safespring AB
    Programmed by Jan Johansson
-   All rights reserved */
+   All rights reserved for now, will have liberal
+   license later */
 
 import (
 	"bytes"
@@ -76,6 +77,7 @@ func getUser(myauth auth) me {
 
 func getNode(myauth auth) string {
 	return getRequest(myauth, "/v1/bunits/17/consumers/31/node", 0)
+// XXX needs conf or code to use your bUnit/node instead
 }
 
 func createConsumer(myauth auth, myid int) consumer {
@@ -117,6 +119,7 @@ func createNode(myauth auth, myid int, myConsumer int) node {
          "contact": "Someone",
          "cpuCount": 1
          }`)
+// XXX hardcoded platform, needs conf
 
 	nodestr = postRequest(myauth, createstr, jsonBody)
 	if err := json.Unmarshal([]byte(nodestr), &newNode); err != nil {
