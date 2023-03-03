@@ -16,13 +16,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/spf13/viper"
 )
-
-const myurl = "https://portal-api.backup.sto2.safedc.net"
-// XXX - needs conf file
-
-const mydebug int = 0
-const create int = 0
 
 func main() {
 
@@ -31,9 +27,21 @@ func main() {
 	var myConsumer consumer
 	var myNode node
 
-	myauth = doLogin()
+	viper.SetConfigName("config")
+	viper.SetConfigType("properties")
+	viper.AddConfigPath(".")
+	err := viper.ReadInConfig()
+	if err != nil {
+		panic(fmt.Errorf("Error reading config file: %w", err))
+	}
 
-	if mydebug > 0 {
+	myauth = doLogin(
+		viper.GetString("client_id"),
+		viper.GetString("username"),
+		viper.GetString("password"),
+	)
+
+	if viper.GetBool("debug") {
 		fmt.Println("Token type:", myauth.TokenType)
 		fmt.Println("Expires:", myauth.Expires)
 		fmt.Println("Refresh token:", myauth.RefreshToken)
@@ -42,7 +50,7 @@ func main() {
 
 	user = getUser(myauth)
 
-	if mydebug > 0 {
+	if viper.GetBool("debug") {
 		fmt.Println(user.Name)
 		fmt.Println(user.BusinessUnit.Name)
 		fmt.Println(user.BusinessUnit.ID)
@@ -50,7 +58,7 @@ func main() {
 
 	fmt.Println(getNode(myauth))
 
-	if create > 0 {
+	if viper.GetBool("create") {
 		myConsumer = createConsumer(myauth, user.BusinessUnit.ID)
 		fmt.Println("Created a Consumer")
 		myNode = createNode(myauth, user.BusinessUnit.ID, myConsumer.ID)
@@ -77,7 +85,7 @@ func getUser(myauth auth) me {
 
 func getNode(myauth auth) string {
 	return getRequest(myauth, "/v1/bunits/17/consumers/31/node", 0)
-// XXX needs conf or code to use your bUnit/node instead
+	// XXX needs conf or code to use your bUnit/node instead
 }
 
 func createConsumer(myauth auth, myid int) consumer {
@@ -85,7 +93,14 @@ func createConsumer(myauth auth, myid int) consumer {
 	var newConsumer consumer
 
 	createcons := "/v1/bunits/" + strconv.Itoa(myid) + "/consumers"
-	jsonBody := []byte(`{"name": "test-host-name-goes-here"}`)
+	name := map[string]string{
+		"name": viper.GetString("client_name"),
+	}
+	jsonBody, err := json.Marshal(name)
+	if err != nil {
+		fmt.Printf("Could not marshal data: %s", err)
+	}
+	// jsonBody := []byte(`{"name": "test-host-name-goes-here"}`)
 	// XXX name should come from input  ^^
 
 	cons = postRequest(myauth, createcons, jsonBody)
@@ -102,24 +117,45 @@ func createNode(myauth auth, myid int, myConsumer int) node {
 	var nodestr string
 	createstr := "/v1/bunits/" + strconv.Itoa(myid) + "/consumers/" +
 		strconv.Itoa(myConsumer) + "/node"
-	jsonBody := []byte(
-		`{
-           "operatingSystem": {
-             "name": "Linux",
-           },
-           "type": {
-             "name": "File server",
-           },
-           "server": {
-              "name": "tsm12.backup.sto2.safedc.net",
-           },
-           "clientOptionSet": {
-             "name": "STANDARD",
-           },
-         "contact": "Someone",
-         "cpuCount": 1
-         }`)
-// XXX hardcoded platform, needs conf
+	data := map[string]interface{}{
+		"operatingSystem": map[string]string{
+			"name": "Linux",
+		},
+		"type": map[string]string{
+			"name": "File server",
+		},
+		"server": map[string]string{
+			"name": "tsm12.backup.sto2.safedc.net",
+		},
+		"clientOptionSet": map[string]string{
+			"name": "STANDARD",
+		},
+		"contact":  "Someone",
+		"cpuCount": 1,
+	}
+	jsonBody, err := json.Marshal(data)
+	if err != nil {
+		fmt.Printf("Error marshaling data %s", err)
+	}
+
+	// jsonBody := []byte(
+	// 	`{
+	//        "operatingSystem": {
+	//          "name": "Linux",
+	//        },
+	//        "type": {
+	//          "name": "File server",
+	//        },
+	//        "server": {
+	//           "name": "tsm12.backup.sto2.safedc.net",
+	//        },
+	//        "clientOptionSet": {
+	//          "name": "STANDARD",
+	//        },
+	//      "contact": "Someone",
+	//      "cpuCount": 1
+	//      }`)
+	// XXX hardcoded platform, needs conf
 
 	nodestr = postRequest(myauth, createstr, jsonBody)
 	if err := json.Unmarshal([]byte(nodestr), &newNode); err != nil {
@@ -138,16 +174,16 @@ func postRequest(myauth auth, posturl string, jsonBody []byte) string {
 
 	bodyReader := bytes.NewReader(jsonBody)
 
-	req, err := http.NewRequest(http.MethodPost, myurl+posturl, bodyReader)
+	req, err := http.NewRequest(http.MethodPost, viper.GetString("url")+posturl, bodyReader)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	req.Header.Set("User-Agent", "safespring-golang-client")
 	req.Header.Set("Content-type", "application/json")
-	req.Header.Set("Origin", "https://test.se")
+	req.Header.Set("Origin", viper.GetString("client_origin"))
 	req.Header.Set("Authorization", "Bearer "+myauth.AccessToken)
-// XXX - needs conf file
+	// XXX - needs conf file
 
 	resp, getErr := postClient.Do(req)
 	if getErr != nil {
@@ -159,7 +195,7 @@ func postRequest(myauth auth, posturl string, jsonBody []byte) string {
 		defer resp.Body.Close()
 	}
 
-	if mydebug > 0 {
+	if viper.GetBool("debug") {
 		fmt.Println("Body: ")
 		fmt.Println(resp.Body)
 	}
@@ -179,16 +215,16 @@ func getRequest(myauth auth, geturl string, print int) string {
 		Timeout: time.Second * 10,
 	}
 
-	req, err := http.NewRequest(http.MethodGet, myurl+geturl, nil)
+	req, err := http.NewRequest(http.MethodGet, viper.GetString("url")+geturl, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	req.Header.Set("User-Agent", "safespring-golang-client")
 	req.Header.Set("Content-type", "application/json")
-	req.Header.Set("Origin", "https://test.se")
+	req.Header.Set("Origin", viper.GetString("client_origin"))
 	req.Header.Set("Authorization", "Bearer "+myauth.AccessToken)
-// XXX - needs conf file
+	// XXX - needs conf file
 
 	resp, getErr := getClient.Do(req)
 	if getErr != nil {
@@ -213,7 +249,7 @@ func getRequest(myauth auth, geturl string, print int) string {
 	return string(body)
 }
 
-func doLogin() auth {
+func doLogin(client_id, username, password string) auth {
 
 	authurl := "/v1/oauth"
 
@@ -222,18 +258,18 @@ func doLogin() auth {
 	}
 
 	loginData := url.Values{}
-	loginData.Add("client_id", "random-hex-digits-go-here")
+	loginData.Add("client_id", client_id)
 	loginData.Add("grant_type", "password")
-	loginData.Add("username", "user@example.com")
-	loginData.Add("password", "PASSWORD-HERE")
-// XXX - needs conf file
+	loginData.Add("username", username)
+	loginData.Add("password", password)
+	// XXX - needs conf file
 
-	if mydebug > 0 {
+	if viper.GetBool("debug") {
 		fmt.Println("data:\n", loginData)
-		fmt.Println("enpoint:", myurl+authurl)
+		fmt.Println("enpoint:", viper.GetString("url")+authurl)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, myurl+authurl,
+	req, err := http.NewRequest(http.MethodPost, viper.GetString("url")+authurl,
 		strings.NewReader(loginData.Encode()))
 	if err != nil {
 		log.Fatal(err)
@@ -241,8 +277,8 @@ func doLogin() auth {
 
 	req.Header.Set("User-Agent", "safespring-golang-client")
 	req.Header.Set("Content-type", "application/json")
-	req.Header.Set("Origin", "https://test.se")
-// XXX - needs conf file
+	req.Header.Set("Origin", viper.GetString("client_origin"))
+	// XXX - needs conf file
 
 	res, getErr := loginClient.Do(req)
 	if getErr != nil {
@@ -269,453 +305,4 @@ func doLogin() auth {
 	}
 
 	return result
-}
-
-type auth struct {
-	AccessToken  string `json:"access_token"`
-	TokenType    string `json:"token_type"`
-	Expires      int    `json:"expires_in"`
-	RefreshToken string `json:"refresh_token"`
-}
-
-type me struct {
-	Actions []struct {
-		Href   string `json:"href"`
-		Method string `json:"method"`
-		Name   string `json:"name"`
-	} `json:"actions"`
-	BusinessUnit struct {
-		_Type     string `json:"$type"`
-		Addresses struct {
-			_Type string        `json:"$type"`
-			Href  string        `json:"href"`
-			Items []interface{} `json:"items"`
-			Total int           `json:"total"`
-		} `json:"addresses"`
-		BillingStorageType   int `json:"billingStorageType"`
-		BillingStorageTypeID int `json:"billingStorageTypeId"`
-		BrandConfig          struct {
-			_Type       string    `json:"$type"`
-			CreatedDate time.Time `json:"createdDate"`
-			Href        string    `json:"href"`
-			ID          int       `json:"id"`
-			Logo        string    `json:"logo"`
-			Styles      []struct {
-				Key   string `json:"key"`
-				Value string `json:"value"`
-			} `json:"styles"`
-		} `json:"brandConfig"`
-		BusinessUnits struct {
-			_Type string        `json:"$type"`
-			Href  string        `json:"href"`
-			Items []interface{} `json:"items"`
-			Total int           `json:"total"`
-		} `json:"businessUnits"`
-		ClientOptionSetFilter            []interface{} `json:"clientOptionSetFilter"`
-		Consumers                        []interface{} `json:"consumers"`
-		CreatedDate                      time.Time     `json:"createdDate"`
-		DomainFilter                     []interface{} `json:"domainFilter"`
-		FinalDeleteRequestApprover       bool          `json:"finalDeleteRequestApprover"`
-		Href                             string        `json:"href"`
-		ID                               int           `json:"id"`
-		InvoiceDay                       int           `json:"invoiceDay"`
-		Name                             string        `json:"name"`
-		NodeLimit                        int           `json:"nodeLimit"`
-		PasswordExpirationDays           int           `json:"passwordExpirationDays"`
-		RegistrationNumber               string        `json:"registrationNumber"`
-		ReportRemotely                   bool          `json:"reportRemotely"`
-		RequireTotp                      bool          `json:"requireTotp"`
-		RequiredApproversOfDeleteRequest int           `json:"requiredApproversOfDeleteRequest"`
-		StorageLimit                     int           `json:"storageLimit"`
-		SupportResponsible               bool          `json:"supportResponsible"`
-		SystemID                         string        `json:"systemId"`
-		Tags                             []interface{} `json:"tags"`
-		TimeZone                         struct {
-			_Type   string `json:"$type"`
-			Actions []struct {
-				Href   string `json:"href"`
-				Method string `json:"method"`
-				Name   string `json:"name"`
-			} `json:"actions"`
-			CreatedDate time.Time `json:"createdDate"`
-			Href        string    `json:"href"`
-			ID          int       `json:"id"`
-			Name        string    `json:"name"`
-			Offset      int       `json:"offset"`
-			WindowsID   string    `json:"windowsId"`
-		} `json:"timeZone"`
-		TransferLimit       int  `json:"transferLimit"`
-		UseScheduleBindings bool `json:"useScheduleBindings"`
-		Users               struct {
-			_Type string        `json:"$type"`
-			Href  string        `json:"href"`
-			Items []interface{} `json:"items"`
-			Total int           `json:"total"`
-		} `json:"users"`
-		UsersCanApproveOwnRequests bool `json:"usersCanApproveOwnRequests"`
-	} `json:"businessUnit"`
-	BusinessUnitID                    int       `json:"businessUnitId"`
-	CreatedDate                       time.Time `json:"createdDate"`
-	CsvDelimiter                      string    `json:"csvDelimiter"`
-	DateAtTimeFormat                  string    `json:"dateAtTimeFormat"`
-	DateFormatInitialized             string    `json:"dateFormatInitialized"`
-	DateTimeFormat                    string    `json:"dateTimeFormat"`
-	DecimalMark                       string    `json:"decimalMark"`
-	DisplayName                       string    `json:"displayName"`
-	Email                             string    `json:"email"`
-	ExcludeJobTags                    bool      `json:"excludeJobTags"`
-	FailedLoginAttempts               int       `json:"failedLoginAttempts"`
-	GroupStatusReportByBusinessUnits  bool      `json:"groupStatusReportByBusinessUnits"`
-	Href                              string    `json:"href"`
-	ID                                int       `json:"id"`
-	ItemsPerPage                      int       `json:"itemsPerPage"`
-	LastLoginDate                     time.Time `json:"lastLoginDate"`
-	LastPasswordChange                time.Time `json:"lastPasswordChange"`
-	Locked                            bool      `json:"locked"`
-	Name                              string    `json:"name"`
-	ReceiveCommentNotifications       bool      `json:"receiveCommentNotifications"`
-	ReceiveDeleteRequestNotifications bool      `json:"receiveDeleteRequestNotifications"`
-	Role                              struct {
-		CreatedDate time.Time `json:"createdDate"`
-		Description string    `json:"description"`
-		ID          int       `json:"id"`
-		Inheritable bool      `json:"inheritable"`
-		Name        string    `json:"name"`
-		Privileges  []struct {
-			CreatedDate time.Time `json:"createdDate"`
-			ID          int       `json:"id"`
-			Name        string    `json:"name"`
-			Operation   string    `json:"operation"`
-			Resource    string    `json:"resource"`
-		} `json:"privileges"`
-	} `json:"role"`
-	TimeFormatInitialized   string        `json:"timeFormatInitialized"`
-	UseOwnReportErrorConfig bool          `json:"useOwnReportErrorConfig"`
-	UserIdentities          []interface{} `json:"userIdentities"`
-	UsesTotp                bool          `json:"usesTotp"`
-}
-
-type consumer struct {
-	AllowNoActivity bool `json:"allowNoActivity"`
-	BusinessUnit    struct {
-		_Type     string `json:"$type"`
-		Addresses struct {
-			_Type string        `json:"$type"`
-			Href  string        `json:"href"`
-			Items []interface{} `json:"items"`
-			Total int           `json:"total"`
-		} `json:"addresses"`
-		BillingStorageType   int `json:"billingStorageType"`
-		BillingStorageTypeID int `json:"billingStorageTypeId"`
-		BusinessUnits        struct {
-			_Type string        `json:"$type"`
-			Href  string        `json:"href"`
-			Items []interface{} `json:"items"`
-			Total int           `json:"total"`
-		} `json:"businessUnits"`
-		ClientOptionSetFilter            []interface{} `json:"clientOptionSetFilter"`
-		Consumers                        []interface{} `json:"consumers"`
-		CreatedDate                      time.Time     `json:"createdDate"`
-		DomainFilter                     []interface{} `json:"domainFilter"`
-		FinalDeleteRequestApprover       bool          `json:"finalDeleteRequestApprover"`
-		Href                             string        `json:"href"`
-		ID                               int           `json:"id"`
-		InvoiceDay                       int           `json:"invoiceDay"`
-		Name                             string        `json:"name"`
-		NodeLimit                        int           `json:"nodeLimit"`
-		PasswordExpirationDays           int           `json:"passwordExpirationDays"`
-		RegistrationNumber               string        `json:"registrationNumber"`
-		ReportRemotely                   bool          `json:"reportRemotely"`
-		RequiredApproversOfDeleteRequest int           `json:"requiredApproversOfDeleteRequest"`
-		StorageLimit                     int           `json:"storageLimit"`
-		SupportResponsible               bool          `json:"supportResponsible"`
-		Tags                             []interface{} `json:"tags"`
-		TransferLimit                    int           `json:"transferLimit"`
-		UseScheduleBindings              bool          `json:"useScheduleBindings"`
-		Users                            struct {
-			_Type string        `json:"$type"`
-			Href  string        `json:"href"`
-			Items []interface{} `json:"items"`
-			Total int           `json:"total"`
-		} `json:"users"`
-		UsersCanApproveOwnRequests bool `json:"usersCanApproveOwnRequests"`
-	} `json:"businessUnit"`
-	CreatedDate                 time.Time `json:"createdDate"`
-	DataSourceIsPotentialParent bool      `json:"dataSourceIsPotentialParent"`
-	DataSourceState             struct {
-		ID   int    `json:"id"`
-		Name string `json:"name"`
-	} `json:"dataSourceState"`
-	DataSourceType struct {
-		ID   int    `json:"id"`
-		Name string `json:"name"`
-	} `json:"dataSourceType"`
-	Href string        `json:"href"`
-	ID   int           `json:"id"`
-	Name string        `json:"name"`
-	Tags []interface{} `json:"tags"`
-}
-
-type node struct {
-	ActivatedDate      time.Time     `json:"activatedDate"`
-	ActivityLogFilters []interface{} `json:"activityLogFilters"`
-	ActivityLogs       []interface{} `json:"activityLogs"`
-	Consumer           struct {
-		_Type           string `json:"$type"`
-		AllowNoActivity bool   `json:"allowNoActivity"`
-		BusinessUnit    struct {
-			_Type     string `json:"$type"`
-			Addresses struct {
-				_Type string        `json:"$type"`
-				Href  string        `json:"href"`
-				Items []interface{} `json:"items"`
-				Total int           `json:"total"`
-			} `json:"addresses"`
-			BillingStorageType   int `json:"billingStorageType"`
-			BillingStorageTypeID int `json:"billingStorageTypeId"`
-			BusinessUnits        struct {
-				_Type string        `json:"$type"`
-				Href  string        `json:"href"`
-				Items []interface{} `json:"items"`
-				Total int           `json:"total"`
-			} `json:"businessUnits"`
-			ClientOptionSetFilter            []interface{} `json:"clientOptionSetFilter"`
-			Consumers                        []interface{} `json:"consumers"`
-			CreatedDate                      time.Time     `json:"createdDate"`
-			DomainFilter                     []interface{} `json:"domainFilter"`
-			FinalDeleteRequestApprover       bool          `json:"finalDeleteRequestApprover"`
-			Href                             string        `json:"href"`
-			ID                               int           `json:"id"`
-			InvoiceDay                       int           `json:"invoiceDay"`
-			Name                             string        `json:"name"`
-			NodeLimit                        int           `json:"nodeLimit"`
-			PasswordExpirationDays           int           `json:"passwordExpirationDays"`
-			RegistrationNumber               string        `json:"registrationNumber"`
-			ReportRemotely                   bool          `json:"reportRemotely"`
-			RequiredApproversOfDeleteRequest int           `json:"requiredApproversOfDeleteRequest"`
-			StorageLimit                     int           `json:"storageLimit"`
-			SupportResponsible               bool          `json:"supportResponsible"`
-			Tags                             []interface{} `json:"tags"`
-			TransferLimit                    int           `json:"transferLimit"`
-			UseScheduleBindings              bool          `json:"useScheduleBindings"`
-			Users                            struct {
-				_Type string        `json:"$type"`
-				Href  string        `json:"href"`
-				Items []interface{} `json:"items"`
-				Total int           `json:"total"`
-			} `json:"users"`
-			UsersCanApproveOwnRequests bool `json:"usersCanApproveOwnRequests"`
-		} `json:"businessUnit"`
-		CreatedDate                 time.Time `json:"createdDate"`
-		DataSourceIsPotentialParent bool      `json:"dataSourceIsPotentialParent"`
-		DataSourceState             struct {
-			ID   int    `json:"id"`
-			Name string `json:"name"`
-		} `json:"dataSourceState"`
-		DataSourceType struct {
-			ID   int    `json:"id"`
-			Name string `json:"name"`
-		} `json:"dataSourceType"`
-		Href string        `json:"href"`
-		ID   int           `json:"id"`
-		Name string        `json:"name"`
-		Tags []interface{} `json:"tags"`
-	} `json:"consumer"`
-	Contact              string    `json:"contact"`
-	ContainsVmFilespaces bool      `json:"containsVmFilespaces"`
-	CpuCount             int       `json:"cpuCount"`
-	CreatedDate          time.Time `json:"createdDate"`
-	DataSourceState      struct {
-		ID   int    `json:"id"`
-		Name string `json:"name"`
-	} `json:"dataSourceState"`
-	DataSourceType struct {
-		ID   int    `json:"id"`
-		Name string `json:"name"`
-	} `json:"dataSourceType"`
-	Decommissioned bool `json:"decommissioned"`
-	Domain         struct {
-		ArchiveRetention int       `json:"archiveRetention"`
-		BackupRetention  int       `json:"backupRetention"`
-		CreatedDate      time.Time `json:"createdDate"`
-		Description      string    `json:"description"`
-		ID               int       `json:"id"`
-		MissingInTsm     bool      `json:"missingInTsm"`
-		Name             string    `json:"name"`
-		Server           struct {
-			AllowedDedupStatThreads int           `json:"allowedDedupStatThreads"`
-			ClientOptionSets        []interface{} `json:"clientOptionSets"`
-			Consumers               []interface{} `json:"consumers"`
-			CreatedDate             time.Time     `json:"createdDate"`
-			DataCenter              struct {
-				BusinessUnit struct {
-					BillingStorageType               int           `json:"billingStorageType"`
-					BillingStorageTypeID             int           `json:"billingStorageTypeId"`
-					ClientOptionSetFilter            []interface{} `json:"clientOptionSetFilter"`
-					Consumers                        []interface{} `json:"consumers"`
-					CreatedDate                      time.Time     `json:"createdDate"`
-					DomainFilter                     []interface{} `json:"domainFilter"`
-					FinalDeleteRequestApprover       bool          `json:"finalDeleteRequestApprover"`
-					ID                               int           `json:"id"`
-					InvoiceDay                       int           `json:"invoiceDay"`
-					Name                             string        `json:"name"`
-					NodeLimit                        int           `json:"nodeLimit"`
-					PasswordExpirationDays           int           `json:"passwordExpirationDays"`
-					RegistrationNumber               string        `json:"registrationNumber"`
-					ReportRemotely                   bool          `json:"reportRemotely"`
-					RequireTotp                      bool          `json:"requireTotp"`
-					RequiredApproversOfDeleteRequest int           `json:"requiredApproversOfDeleteRequest"`
-					StorageLimit                     int           `json:"storageLimit"`
-					SupportResponsible               bool          `json:"supportResponsible"`
-					SystemID                         string        `json:"systemId"`
-					Tags                             []interface{} `json:"tags"`
-					TransferLimit                    int           `json:"transferLimit"`
-					UseScheduleBindings              bool          `json:"useScheduleBindings"`
-					UsersCanApproveOwnRequests       bool          `json:"usersCanApproveOwnRequests"`
-				} `json:"businessUnit"`
-				CreatedDate time.Time `json:"createdDate"`
-				ID          int       `json:"id"`
-				Name        string    `json:"name"`
-			} `json:"dataCenter"`
-			DedupStatsGenerationTime string `json:"dedupStatsGenerationTime"`
-			DeleteMissingItems       bool   `json:"deleteMissingItems"`
-			DeleteOldDedupStats      bool   `json:"deleteOldDedupStats"`
-			Description              string `json:"description"`
-			Domains                  []struct {
-				ArchiveRetention int       `json:"archiveRetention"`
-				BackupRetention  int       `json:"backupRetention"`
-				CreatedDate      time.Time `json:"createdDate"`
-				Description      string    `json:"description"`
-				ID               int       `json:"id"`
-				MissingInTsm     bool      `json:"missingInTsm"`
-				Name             string    `json:"name"`
-			} `json:"domains"`
-			Errors                           []interface{} `json:"errors"`
-			ErrorsDeactivated                bool          `json:"errorsDeactivated"`
-			GenerateDedupStatsForStoragePool bool          `json:"generateDedupStatsForStoragePool"`
-			GenerateDedupsStats              bool          `json:"generateDedupsStats"`
-			GenerateDedupsStatsWaitSeconds   int           `json:"generateDedupsStatsWaitSeconds"`
-			ID                               int           `json:"id"`
-			ImportFromServer                 bool          `json:"importFromServer"`
-			ImportOverlapMinutes             int           `json:"importOverlapMinutes"`
-			ImportStoragePoolInfoFromScale   bool          `json:"importStoragePoolInfoFromScale"`
-			InstallDate                      time.Time     `json:"installDate"`
-			IsDefaultServerForBusinessUnit   bool          `json:"isDefaultServerForBusinessUnit"`
-			LastSuccessfulImportTime         time.Time     `json:"lastSuccessfulImportTime"`
-			LastSuccessfulReportTime         time.Time     `json:"lastSuccessfulReportTime"`
-			Level                            int           `json:"level"`
-			LowestAllowedClientVersion       string        `json:"lowestAllowedClientVersion"`
-			LowestCompatibleClientVersion    string        `json:"lowestCompatibleClientVersion"`
-			MachineName                      string        `json:"machineName"`
-			Name                             string        `json:"name"`
-			NodeNetworkAddress               string        `json:"nodeNetworkAddress"`
-			NodeNetworkPort                  int           `json:"nodeNetworkPort"`
-			Port                             int           `json:"port"`
-			PortalNetworkAddress             string        `json:"portalNetworkAddress"`
-			ReadOnly                         bool          `json:"readOnly"`
-			Release                          int           `json:"release"`
-			ReportingTime                    string        `json:"reportingTime"`
-			SubLevel                         int           `json:"subLevel"`
-			TimeZone                         struct {
-				CreatedDate time.Time `json:"createdDate"`
-				ID          int       `json:"id"`
-				Name        string    `json:"name"`
-				Offset      int       `json:"offset"`
-				WindowsID   string    `json:"windowsId"`
-			} `json:"timeZone"`
-			Type struct {
-				ID   int    `json:"id"`
-				Name string `json:"name"`
-			} `json:"type"`
-			UseSsl      bool   `json:"useSsl"`
-			Version     int    `json:"version"`
-			VersionName string `json:"versionName"`
-		} `json:"server"`
-	} `json:"domain"`
-	Events          []interface{} `json:"events"`
-	Filespaces      []interface{} `json:"filespaces"`
-	Href            string        `json:"href"`
-	Hypervisor      string        `json:"hypervisor"`
-	ID              int           `json:"id"`
-	LastAccessTime  time.Time     `json:"lastAccessTime"`
-	Locked          bool          `json:"locked"`
-	MacAddress      string        `json:"macAddress"`
-	Name            string        `json:"name"`
-	NodeGroups      []interface{} `json:"nodeGroups"`
-	NodeSchedules   []interface{} `json:"nodeSchedules"`
-	OperatingSystem struct {
-		CreatedDate time.Time `json:"createdDate"`
-		ID          int       `json:"id"`
-		Name        string    `json:"name"`
-		ShortName   string    `json:"shortName"`
-	} `json:"operatingSystem"`
-	OSLevel struct {
-		CreatedDate time.Time `json:"createdDate"`
-		ID          int       `json:"id"`
-		Name        string    `json:"name"`
-	} `json:"osLevel"`
-	Platform struct {
-		CreatedDate time.Time `json:"createdDate"`
-		ID          int       `json:"id"`
-		Name        string    `json:"name"`
-	} `json:"platform"`
-	ProxyAgents                 []interface{} `json:"proxyAgents"`
-	ProxyTargets                []interface{} `json:"proxyTargets"`
-	RegisteredTime              time.Time     `json:"registeredTime"`
-	RemoteActivities            []interface{} `json:"remoteActivities"`
-	ReplicationMode             int           `json:"replicationMode"`
-	ReplicationServerPrimary    string        `json:"replicationServerPrimary"`
-	ReplicationServerSecondary  string        `json:"replicationServerSecondary"`
-	ReplicationServerSecondary2 string        `json:"replicationServerSecondary2"`
-	ReplicationState            bool          `json:"replicationState"`
-	RetentionSets               []interface{} `json:"retentionSets"`
-	Schedules                   []struct {
-		AsNodeNames   []interface{} `json:"asNodeNames"`
-		CreatedDate   time.Time     `json:"createdDate"`
-		DailyJobLists []interface{} `json:"dailyJobLists"`
-		DayOfWeek     string        `json:"dayOfWeek"`
-		Description   string        `json:"description"`
-		Duration      int           `json:"duration"`
-		Friday        bool          `json:"friday"`
-		ID            int           `json:"id"`
-		Monday        bool          `json:"monday"`
-		Name          string        `json:"name"`
-		Objects       string        `json:"objects"`
-		Options       string        `json:"options"`
-		Period        int           `json:"period"`
-		Priority      int           `json:"priority"`
-		ProxySchedule bool          `json:"proxySchedule"`
-		Saturday      bool          `json:"saturday"`
-		StartTime     time.Time     `json:"startTime"`
-		Sunday        bool          `json:"sunday"`
-		Thursday      bool          `json:"thursday"`
-		Tuesday       bool          `json:"tuesday"`
-		Wednesday     bool          `json:"wednesday"`
-	} `json:"schedules"`
-	SessionSecurity struct {
-		ID   int    `json:"id"`
-		Name string `json:"name"`
-	} `json:"sessionSecurity"`
-	SyncState struct {
-		CreatedDate time.Time `json:"createdDate"`
-		ID          int       `json:"id"`
-		Name        string    `json:"name"`
-	} `json:"syncState"`
-	TcpAddress       string `json:"tcpAddress"`
-	TcpName          string `json:"tcpName"`
-	Ticket           string `json:"ticket"`
-	TsmClientVersion struct {
-		CreatedDate time.Time `json:"createdDate"`
-		ID          int       `json:"id"`
-		Name        string    `json:"name"`
-	} `json:"tsmClientVersion"`
-	TsmName     string `json:"tsmName"`
-	TsmNodeID   string `json:"tsmNodeId"`
-	TsmPassword string `json:"tsmPassword"`
-	Type        struct {
-		CreatedDate time.Time `json:"createdDate"`
-		ID          int       `json:"id"`
-		Name        string    `json:"name"`
-	} `json:"type"`
-	UnscheduledActivities []interface{} `json:"unscheduledActivities"`
 }
