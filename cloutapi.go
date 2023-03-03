@@ -16,14 +16,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/spf13/viper"
 )
-
-const myurl = "https://portal-api.backup.sto2.safedc.net"
-
-// XXX - needs conf file
-
-const mydebug int = 0
-const create int = 0
 
 func main() {
 
@@ -32,9 +27,21 @@ func main() {
 	var myConsumer consumer
 	var myNode node
 
-	myauth = doLogin()
+	viper.SetConfigName("config")
+	viper.SetConfigType("properties")
+	viper.AddConfigPath(".")
+	err := viper.ReadInConfig()
+	if err != nil {
+		panic(fmt.Errorf("Error reading config file: %w", err))
+	}
 
-	if mydebug > 0 {
+	myauth = doLogin(
+		viper.GetString("client_id"),
+		viper.GetString("username"),
+		viper.GetString("password"),
+	)
+
+	if viper.GetBool("debug") {
 		fmt.Println("Token type:", myauth.TokenType)
 		fmt.Println("Expires:", myauth.Expires)
 		fmt.Println("Refresh token:", myauth.RefreshToken)
@@ -43,7 +50,7 @@ func main() {
 
 	user = getUser(myauth)
 
-	if mydebug > 0 {
+	if viper.GetBool("debug") {
 		fmt.Println(user.Name)
 		fmt.Println(user.BusinessUnit.Name)
 		fmt.Println(user.BusinessUnit.ID)
@@ -51,7 +58,7 @@ func main() {
 
 	fmt.Println(getNode(myauth))
 
-	if create > 0 {
+	if viper.GetBool("create") {
 		myConsumer = createConsumer(myauth, user.BusinessUnit.ID)
 		fmt.Println("Created a Consumer")
 		myNode = createNode(myauth, user.BusinessUnit.ID, myConsumer.ID)
@@ -86,7 +93,14 @@ func createConsumer(myauth auth, myid int) consumer {
 	var newConsumer consumer
 
 	createcons := "/v1/bunits/" + strconv.Itoa(myid) + "/consumers"
-	jsonBody := []byte(`{"name": "test-host-name-goes-here"}`)
+	name := map[string]string{
+		"name": viper.GetString("client_name"),
+	}
+	jsonBody, err := json.Marshal(name)
+	if err != nil {
+		fmt.Printf("Could not marshal data: %s", err)
+	}
+	// jsonBody := []byte(`{"name": "test-host-name-goes-here"}`)
 	// XXX name should come from input  ^^
 
 	cons = postRequest(myauth, createcons, jsonBody)
@@ -103,23 +117,44 @@ func createNode(myauth auth, myid int, myConsumer int) node {
 	var nodestr string
 	createstr := "/v1/bunits/" + strconv.Itoa(myid) + "/consumers/" +
 		strconv.Itoa(myConsumer) + "/node"
-	jsonBody := []byte(
-		`{
-           "operatingSystem": {
-             "name": "Linux",
-           },
-           "type": {
-             "name": "File server",
-           },
-           "server": {
-              "name": "tsm12.backup.sto2.safedc.net",
-           },
-           "clientOptionSet": {
-             "name": "STANDARD",
-           },
-         "contact": "Someone",
-         "cpuCount": 1
-         }`)
+	data := map[string]interface{}{
+		"operatingSystem": map[string]string{
+			"name": "Linux",
+		},
+		"type": map[string]string{
+			"name": "File server",
+		},
+		"server": map[string]string{
+			"name": "tsm12.backup.sto2.safedc.net",
+		},
+		"clientOptionSet": map[string]string{
+			"name": "STANDARD",
+		},
+		"contact":  "Someone",
+		"cpuCount": 1,
+	}
+	jsonBody, err := json.Marshal(data)
+	if err != nil {
+		fmt.Printf("Error marshaling data %s", err)
+	}
+
+	// jsonBody := []byte(
+	// 	`{
+	//        "operatingSystem": {
+	//          "name": "Linux",
+	//        },
+	//        "type": {
+	//          "name": "File server",
+	//        },
+	//        "server": {
+	//           "name": "tsm12.backup.sto2.safedc.net",
+	//        },
+	//        "clientOptionSet": {
+	//          "name": "STANDARD",
+	//        },
+	//      "contact": "Someone",
+	//      "cpuCount": 1
+	//      }`)
 	// XXX hardcoded platform, needs conf
 
 	nodestr = postRequest(myauth, createstr, jsonBody)
@@ -139,14 +174,14 @@ func postRequest(myauth auth, posturl string, jsonBody []byte) string {
 
 	bodyReader := bytes.NewReader(jsonBody)
 
-	req, err := http.NewRequest(http.MethodPost, myurl+posturl, bodyReader)
+	req, err := http.NewRequest(http.MethodPost, viper.GetString("url")+posturl, bodyReader)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	req.Header.Set("User-Agent", "safespring-golang-client")
 	req.Header.Set("Content-type", "application/json")
-	req.Header.Set("Origin", "https://test.se")
+	req.Header.Set("Origin", viper.GetString("client_origin"))
 	req.Header.Set("Authorization", "Bearer "+myauth.AccessToken)
 	// XXX - needs conf file
 
@@ -160,7 +195,7 @@ func postRequest(myauth auth, posturl string, jsonBody []byte) string {
 		defer resp.Body.Close()
 	}
 
-	if mydebug > 0 {
+	if viper.GetBool("debug") {
 		fmt.Println("Body: ")
 		fmt.Println(resp.Body)
 	}
@@ -180,14 +215,14 @@ func getRequest(myauth auth, geturl string, print int) string {
 		Timeout: time.Second * 10,
 	}
 
-	req, err := http.NewRequest(http.MethodGet, myurl+geturl, nil)
+	req, err := http.NewRequest(http.MethodGet, viper.GetString("url")+geturl, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	req.Header.Set("User-Agent", "safespring-golang-client")
 	req.Header.Set("Content-type", "application/json")
-	req.Header.Set("Origin", "https://test.se")
+	req.Header.Set("Origin", viper.GetString("client_origin"))
 	req.Header.Set("Authorization", "Bearer "+myauth.AccessToken)
 	// XXX - needs conf file
 
@@ -214,7 +249,7 @@ func getRequest(myauth auth, geturl string, print int) string {
 	return string(body)
 }
 
-func doLogin() auth {
+func doLogin(client_id, username, password string) auth {
 
 	authurl := "/v1/oauth"
 
@@ -223,18 +258,18 @@ func doLogin() auth {
 	}
 
 	loginData := url.Values{}
-	loginData.Add("client_id", "random-hex-digits-go-here")
+	loginData.Add("client_id", client_id)
 	loginData.Add("grant_type", "password")
-	loginData.Add("username", "user@example.com")
-	loginData.Add("password", "PASSWORD-HERE")
+	loginData.Add("username", username)
+	loginData.Add("password", password)
 	// XXX - needs conf file
 
-	if mydebug > 0 {
+	if viper.GetBool("debug") {
 		fmt.Println("data:\n", loginData)
-		fmt.Println("enpoint:", myurl+authurl)
+		fmt.Println("enpoint:", viper.GetString("url")+authurl)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, myurl+authurl,
+	req, err := http.NewRequest(http.MethodPost, viper.GetString("url")+authurl,
 		strings.NewReader(loginData.Encode()))
 	if err != nil {
 		log.Fatal(err)
@@ -242,7 +277,7 @@ func doLogin() auth {
 
 	req.Header.Set("User-Agent", "safespring-golang-client")
 	req.Header.Set("Content-type", "application/json")
-	req.Header.Set("Origin", "https://test.se")
+	req.Header.Set("Origin", viper.GetString("client_origin"))
 	// XXX - needs conf file
 
 	res, getErr := loginClient.Do(req)
