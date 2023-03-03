@@ -1,0 +1,9 @@
+url=https://portal-api.backup.sto2.safedc.net
+client_id="api-key"
+username="username"
+password="secretPa$$word"
+
+client_name="safespring-test-klient"
+client_origin=https://safespring.com
+debug=true
+create=true
