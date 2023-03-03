@@ -1,3 +1,3 @@
-module cloutapi
+module github.com/safespring/cloutility-api-client
 
-go 1.19
+go 1.20
