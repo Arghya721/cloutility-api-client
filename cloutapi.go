@@ -32,7 +32,7 @@ func main() {
 	viper.AddConfigPath(".")
 	err := viper.ReadInConfig()
 	if err != nil {
-		panic(fmt.Errorf("Error reading config file: %w", err))
+		panic(fmt.Errorf("error reading config file: %w", err))
 	}
 
 	myauth = doLogin(
