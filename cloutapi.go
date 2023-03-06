@@ -13,10 +13,12 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
@@ -27,10 +29,18 @@ func main() {
 	var myConsumer consumer
 	var myNode node
 
+	pflag.Bool("dry-run", false, "dont actually create anything")
+	pflag.Bool("debug", false, "print debugging information")
+	pflag.Parse()
+	err := viper.BindPFlags(pflag.CommandLine)
+	if err != nil {
+		panic(fmt.Errorf("error parsing flags: %w", err))
+	}
+
 	viper.SetConfigName("config")
 	viper.SetConfigType("properties")
 	viper.AddConfigPath(".")
-	err := viper.ReadInConfig()
+	err = viper.ReadInConfig()
 	if err != nil {
 		panic(fmt.Errorf("error reading config file: %w", err))
 	}
@@ -58,13 +68,16 @@ func main() {
 
 	fmt.Println(getNode(myauth))
 
-	if viper.GetBool("create") {
-		myConsumer = createConsumer(myauth, user.BusinessUnit.ID)
-		fmt.Println("Created a Consumer")
-		myNode = createNode(myauth, user.BusinessUnit.ID, myConsumer.ID)
-		fmt.Println("Created a Node")
-		fmt.Println(myNode)
+	if viper.GetBool("dry-run") {
+		fmt.Println("running in dry-run mode, exiting")
+		os.Exit(0)
 	}
+
+	myConsumer = createConsumer(myauth, user.BusinessUnit.ID)
+	fmt.Println("Created a Consumer")
+	myNode = createNode(myauth, user.BusinessUnit.ID, myConsumer.ID)
+	fmt.Println("Created a Node")
+	fmt.Println(myNode)
 }
 
 func getUser(myauth auth) me {
