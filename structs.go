@@ -16,9 +16,9 @@ type me struct {
 		Name   string `json:"name"`
 	} `json:"actions"`
 	BusinessUnit struct {
-		_Type     string `json:"$type"`
+		Type      string `json:"$type"`
 		Addresses struct {
-			_Type string        `json:"$type"`
+			Type  string        `json:"$type"`
 			Href  string        `json:"href"`
 			Items []interface{} `json:"items"`
 			Total int           `json:"total"`
@@ -26,7 +26,7 @@ type me struct {
 		BillingStorageType   int `json:"billingStorageType"`
 		BillingStorageTypeID int `json:"billingStorageTypeId"`
 		BrandConfig          struct {
-			_Type       string    `json:"$type"`
+			Type        string    `json:"$type"`
 			CreatedDate time.Time `json:"createdDate"`
 			Href        string    `json:"href"`
 			ID          int       `json:"id"`
@@ -37,7 +37,7 @@ type me struct {
 			} `json:"styles"`
 		} `json:"brandConfig"`
 		BusinessUnits struct {
-			_Type string        `json:"$type"`
+			Type  string        `json:"$type"`
 			Href  string        `json:"href"`
 			Items []interface{} `json:"items"`
 			Total int           `json:"total"`
@@ -62,7 +62,7 @@ type me struct {
 		SystemID                         string        `json:"systemId"`
 		Tags                             []interface{} `json:"tags"`
 		TimeZone                         struct {
-			_Type   string `json:"$type"`
+			Type    string `json:"$type"`
 			Actions []struct {
 				Href   string `json:"href"`
 				Method string `json:"method"`
@@ -78,7 +78,7 @@ type me struct {
 		TransferLimit       int  `json:"transferLimit"`
 		UseScheduleBindings bool `json:"useScheduleBindings"`
 		Users               struct {
-			_Type string        `json:"$type"`
+			Type  string        `json:"$type"`
 			Href  string        `json:"href"`
 			Items []interface{} `json:"items"`
 			Total int           `json:"total"`
@@ -129,9 +129,9 @@ type me struct {
 type consumer struct {
 	AllowNoActivity bool `json:"allowNoActivity"`
 	BusinessUnit    struct {
-		_Type     string `json:"$type"`
+		Type      string `json:"$type"`
 		Addresses struct {
-			_Type string        `json:"$type"`
+			Type  string        `json:"$type"`
 			Href  string        `json:"href"`
 			Items []interface{} `json:"items"`
 			Total int           `json:"total"`
@@ -139,7 +139,7 @@ type consumer struct {
 		BillingStorageType   int `json:"billingStorageType"`
 		BillingStorageTypeID int `json:"billingStorageTypeId"`
 		BusinessUnits        struct {
-			_Type string        `json:"$type"`
+			Type  string        `json:"$type"`
 			Href  string        `json:"href"`
 			Items []interface{} `json:"items"`
 			Total int           `json:"total"`
@@ -164,7 +164,7 @@ type consumer struct {
 		TransferLimit                    int           `json:"transferLimit"`
 		UseScheduleBindings              bool          `json:"useScheduleBindings"`
 		Users                            struct {
-			_Type string        `json:"$type"`
+			Type  string        `json:"$type"`
 			Href  string        `json:"href"`
 			Items []interface{} `json:"items"`
 			Total int           `json:"total"`
@@ -192,12 +192,12 @@ type node struct {
 	ActivityLogFilters []interface{} `json:"activityLogFilters"`
 	ActivityLogs       []interface{} `json:"activityLogs"`
 	Consumer           struct {
-		_Type           string `json:"$type"`
+		Type            string `json:"$type"`
 		AllowNoActivity bool   `json:"allowNoActivity"`
 		BusinessUnit    struct {
-			_Type     string `json:"$type"`
+			Type      string `json:"$type"`
 			Addresses struct {
-				_Type string        `json:"$type"`
+				Type  string        `json:"$type"`
 				Href  string        `json:"href"`
 				Items []interface{} `json:"items"`
 				Total int           `json:"total"`
@@ -205,7 +205,7 @@ type node struct {
 			BillingStorageType   int `json:"billingStorageType"`
 			BillingStorageTypeID int `json:"billingStorageTypeId"`
 			BusinessUnits        struct {
-				_Type string        `json:"$type"`
+				Type  string        `json:"$type"`
 				Href  string        `json:"href"`
 				Items []interface{} `json:"items"`
 				Total int           `json:"total"`
@@ -230,7 +230,7 @@ type node struct {
 			TransferLimit                    int           `json:"transferLimit"`
 			UseScheduleBindings              bool          `json:"useScheduleBindings"`
 			Users                            struct {
-				_Type string        `json:"$type"`
+				Type  string        `json:"$type"`
 				Href  string        `json:"href"`
 				Items []interface{} `json:"items"`
 				Total int           `json:"total"`
