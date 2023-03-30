@@ -1,4 +1,4 @@
-package main
+package cloutapi
 
 /* Copyright 2022-2023 (C) Blue Safespring AB
    Programmed by Jan Johansson
@@ -18,32 +18,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
-func main() {
+func RunClient() {
 
 	var myauth auth
 	var user me
 	var myConsumer consumer
 	var myNode node
-
-	pflag.Bool("dry-run", false, "dont actually create anything")
-	pflag.Bool("debug", false, "print debugging information")
-	pflag.Parse()
-	err := viper.BindPFlags(pflag.CommandLine)
-	if err != nil {
-		panic(fmt.Errorf("error parsing flags: %w", err))
-	}
-
-	viper.SetConfigName("config")
-	viper.SetConfigType("properties")
-	viper.AddConfigPath(".")
-	err = viper.ReadInConfig()
-	if err != nil {
-		panic(fmt.Errorf("error reading config file: %w", err))
-	}
 
 	myauth = doLogin(
 		viper.GetString("client_id"),
@@ -107,7 +90,7 @@ func createConsumer(myauth auth, myid int) consumer {
 
 	createcons := "/v1/bunits/" + strconv.Itoa(myid) + "/consumers"
 	name := map[string]string{
-		"name": viper.GetString("client_name"),
+		"name": viper.GetString("node_name"),
 	}
 	jsonBody, err := json.Marshal(name)
 	if err != nil {
