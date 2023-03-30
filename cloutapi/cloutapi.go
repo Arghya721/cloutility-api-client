@@ -22,27 +22,36 @@ import (
 	"github.com/spf13/viper"
 )
 
+type Client struct {
+	AccessToken  string `json:"access_token"`
+	TokenType    string `json:"token_type"`
+	Expires      int    `json:"expires_in"`
+	RefreshToken string `json:"refresh_token"`
+}
+
 func RunClient() {
 
-	var myauth auth
-	var user me
-	var myConsumer consumer
-	var myNode node
+	var (
+		c          Client
+		user       me
+		myConsumer consumer
+		myNode     node
+	)
 
-	myauth = doLogin(
+	c.doLogin(
 		viper.GetString("client_id"),
 		viper.GetString("username"),
 		viper.GetString("password"),
 	)
 
 	if viper.GetBool("debug") {
-		fmt.Println("Token type:", myauth.TokenType)
-		fmt.Println("Expires:", myauth.Expires)
-		fmt.Println("Refresh token:", myauth.RefreshToken)
-		fmt.Println("Access token:", myauth.AccessToken)
+		fmt.Println("Token type:", c.TokenType)
+		fmt.Println("Expires:", c.Expires)
+		fmt.Println("Refresh token:", c.RefreshToken)
+		fmt.Println("Access token:", c.AccessToken)
 	}
 
-	user = getUser(myauth)
+	c.getUser()
 
 	if viper.GetBool("debug") {
 		fmt.Println(user.Name)
@@ -50,27 +59,27 @@ func RunClient() {
 		fmt.Println(user.BusinessUnit.ID)
 	}
 
-	fmt.Println(getNode(myauth))
+	fmt.Println(c.getNode())
 
 	if viper.GetBool("dry-run") {
 		fmt.Println("running in dry-run mode, exiting")
 		os.Exit(0)
 	}
 
-	myConsumer = createConsumer(myauth, user.BusinessUnit.ID)
+	c.createConsumer(user.BusinessUnit.ID)
 	fmt.Println("Created a Consumer")
-	myNode = createNode(myauth, user.BusinessUnit.ID, myConsumer.ID)
+	c.createNode(user.BusinessUnit.ID, myConsumer.ID)
 	fmt.Println("Created a Node")
 	fmt.Println(myNode)
 }
 
-func getUser(myauth auth) me {
+func (c *Client) getUser() me {
 
 	var result me
 
 	will_print := 0
 
-	body := getRequest(myauth, "/v1/me", will_print)
+	body := c.getRequest("/v1/me", will_print)
 
 	if err := json.Unmarshal([]byte(body), &result); err != nil {
 		log.Fatal(err)
@@ -80,12 +89,12 @@ func getUser(myauth auth) me {
 
 }
 
-func getNode(myauth auth) string {
-	return getRequest(myauth, "/v1/bunits/17/consumers/31/node", 0)
+func (c *Client) getNode() string {
+	return c.getRequest("/v1/bunits/17/consumers/31/node", 0)
 	// XXX needs conf or code to use your bUnit/node instead
 }
 
-func createConsumer(myauth auth, myid int) consumer {
+func (c *Client) createConsumer(myid int) consumer {
 	var cons string
 	var newConsumer consumer
 
@@ -100,7 +109,7 @@ func createConsumer(myauth auth, myid int) consumer {
 	// jsonBody := []byte(`{"name": "test-host-name-goes-here"}`)
 	// XXX name should come from input  ^^
 
-	cons = postRequest(myauth, createcons, jsonBody)
+	cons = c.postRequest(createcons, jsonBody)
 	if err := json.Unmarshal([]byte(cons), &newConsumer); err != nil {
 		log.Fatal(err)
 	}
@@ -108,7 +117,7 @@ func createConsumer(myauth auth, myid int) consumer {
 	return newConsumer
 }
 
-func createNode(myauth auth, myid int, myConsumer int) node {
+func (c *Client) createNode(myid int, myConsumer int) node {
 
 	var newNode node
 	var nodestr string
@@ -154,7 +163,7 @@ func createNode(myauth auth, myid int, myConsumer int) node {
 	//      }`)
 	// XXX hardcoded platform, needs conf
 
-	nodestr = postRequest(myauth, createstr, jsonBody)
+	nodestr = c.postRequest(createstr, jsonBody)
 	if err := json.Unmarshal([]byte(nodestr), &newNode); err != nil {
 		log.Fatal(err)
 	}
@@ -163,7 +172,7 @@ func createNode(myauth auth, myid int, myConsumer int) node {
 
 }
 
-func postRequest(myauth auth, posturl string, jsonBody []byte) string {
+func (c *Client) postRequest(posturl string, jsonBody []byte) string {
 
 	postClient := http.Client{
 		Timeout: time.Second * 10,
@@ -179,7 +188,7 @@ func postRequest(myauth auth, posturl string, jsonBody []byte) string {
 	req.Header.Set("User-Agent", "safespring-golang-client")
 	req.Header.Set("Content-type", "application/json")
 	req.Header.Set("Origin", viper.GetString("client_origin"))
-	req.Header.Set("Authorization", "Bearer "+myauth.AccessToken)
+	req.Header.Set("Authorization", "Bearer "+c.AccessToken)
 	// XXX - needs conf file
 
 	resp, getErr := postClient.Do(req)
@@ -206,7 +215,7 @@ func postRequest(myauth auth, posturl string, jsonBody []byte) string {
 	return string(body)
 }
 
-func getRequest(myauth auth, geturl string, print int) string {
+func (c *Client) getRequest(geturl string, print int) string {
 
 	getClient := http.Client{
 		Timeout: time.Second * 10,
@@ -220,7 +229,7 @@ func getRequest(myauth auth, geturl string, print int) string {
 	req.Header.Set("User-Agent", "safespring-golang-client")
 	req.Header.Set("Content-type", "application/json")
 	req.Header.Set("Origin", viper.GetString("client_origin"))
-	req.Header.Set("Authorization", "Bearer "+myauth.AccessToken)
+	req.Header.Set("Authorization", "Bearer "+c.AccessToken)
 	// XXX - needs conf file
 
 	resp, getErr := getClient.Do(req)
@@ -246,7 +255,7 @@ func getRequest(myauth auth, geturl string, print int) string {
 	return string(body)
 }
 
-func doLogin(client_id, username, password string) auth {
+func (c *Client) doLogin(client_id, username, password string) {
 
 	authurl := "/v1/oauth"
 
@@ -296,10 +305,10 @@ func doLogin(client_id, username, password string) auth {
 	// fmt.Println("Body1: ", string(body))
 
 	//	var result map[string]interface{}
-	var result auth
-	if err := json.Unmarshal([]byte(body), &result); err != nil {
+	// var result auth
+	if err := json.Unmarshal([]byte(body), &c); err != nil {
 		log.Fatal(err)
 	}
 
-	return result
+	// return result
 }
