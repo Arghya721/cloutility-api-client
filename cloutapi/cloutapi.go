@@ -38,11 +38,14 @@ func RunClient() {
 		myNode     node
 	)
 
-	c.doLogin(
+	err := c.authenticate(
 		viper.GetString("client_id"),
 		viper.GetString("username"),
 		viper.GetString("password"),
 	)
+	if err != nil {
+		log.Printf("Error authenticating: %s", err)
+	}
 
 	if viper.GetBool("debug") {
 		fmt.Println("Token type:", c.TokenType)
@@ -255,7 +258,7 @@ func (c *Client) getRequest(geturl string, print int) string {
 	return string(body)
 }
 
-func (c *Client) doLogin(client_id, username, password string) {
+func (c *Client) authenticate(client_id, username, password string) error {
 
 	authurl := "/v1/oauth"
 
@@ -268,7 +271,6 @@ func (c *Client) doLogin(client_id, username, password string) {
 	loginData.Add("grant_type", "password")
 	loginData.Add("username", username)
 	loginData.Add("password", password)
-	// XXX - needs conf file
 
 	if viper.GetBool("debug") {
 		fmt.Println("data:\n", loginData)
@@ -278,7 +280,7 @@ func (c *Client) doLogin(client_id, username, password string) {
 	req, err := http.NewRequest(http.MethodPost, viper.GetString("url")+authurl,
 		strings.NewReader(loginData.Encode()))
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	req.Header.Set("User-Agent", "safespring-golang-client")
@@ -286,23 +288,21 @@ func (c *Client) doLogin(client_id, username, password string) {
 	req.Header.Set("Origin", viper.GetString("client_origin"))
 	// XXX - needs conf file
 
-	res, getErr := loginClient.Do(req)
-	if getErr != nil {
-		fmt.Printf("HTTP: %s\n", res.Status)
-		log.Fatal(getErr)
+	res, err := loginClient.Do(req)
+	if err != nil {
+		return err
 	}
 
 	if res.Body != nil {
 		defer res.Body.Close()
 	}
 
-	body, readErr := io.ReadAll(res.Body)
-	if readErr != nil {
-		fmt.Printf("HTTP: %s\n", res.Status)
-		log.Fatal(readErr)
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return err
 	}
 
-	// fmt.Println("Body1: ", string(body))
+	// fmt.Println("Bod	// return resulty1: ", string(body))
 
 	//	var result map[string]interface{}
 	// var result auth
@@ -310,5 +310,6 @@ func (c *Client) doLogin(client_id, username, password string) {
 		log.Fatal(err)
 	}
 
-	// return result
+	return nil
+
 }
