@@ -9,6 +9,7 @@ package cloutapi
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -94,11 +95,11 @@ func (c *Client) getUser() (me, error) {
 
 	body, err := c.makeRequest("/v1/me", "GET", nil)
 	if err != nil {
-		return me{}, err
+		return me{}, fmt.Errorf("error requesting userdata: %s", err)
 	}
 
 	if err := json.Unmarshal([]byte(body), &result); err != nil {
-		return me{}, err
+		return me{}, fmt.Errorf("error unmarshalling userdata: %s", err)
 	}
 
 	return result, nil
@@ -108,7 +109,7 @@ func (c *Client) getUser() (me, error) {
 func (c *Client) getNode() (string, error) {
 	node, err := c.makeRequest("/v1/bunits/17/consumers/31/node", "GET", nil)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error requesting nodedata: %s", err)
 	}
 	return node, nil
 	// XXX needs conf or code to use your bUnit/node instead
@@ -124,15 +125,15 @@ func (c *Client) createConsumer(myid int) (consumer, error) {
 	}
 	jsonBody, err := json.Marshal(name)
 	if err != nil {
-		return consumer{}, err
+		return consumer{}, fmt.Errorf("error encoding json payload: %s", err)
 	}
 
 	cons, err = c.makeRequest(createcons, http.MethodPost, jsonBody)
 	if err != nil {
-		return consumer{}, err
+		return consumer{}, fmt.Errorf("error creating consumer: %s", err)
 	}
 	if err := json.Unmarshal([]byte(cons), &newConsumer); err != nil {
-		log.Fatal(err)
+        return consumer{}, fmt.Errorf("error decoding consumer response: %s", err)
 	}
 
 	return newConsumer, nil
@@ -162,15 +163,15 @@ func (c *Client) createNode(myid int, myConsumer int) (node, error) {
 	}
 	payload, err := json.Marshal(data)
 	if err != nil {
-		return node{}, err
+		return node{}, fmt.Errorf("failed to encode json payload: %s", err)
 	}
 
 	nodestr, err = c.makeRequest(createstr, http.MethodPost, payload)
 	if err != nil {
-		return node{}, err
+        return node{}, fmt.Errorf("failed to create node: %s", err)
 	}
 	if err := json.Unmarshal([]byte(nodestr), &newNode); err != nil {
-		return node{}, err
+        return node{}, fmt.Errorf("failed to decode nodedata: %s", err)
 	}
 
 	return newNode, nil
@@ -186,7 +187,7 @@ func (c *Client) makeRequest(contextPath string, method string, payload []byte) 
 
 	req, err := http.NewRequest(method, viper.GetString("url")+contextPath, reader)
 	if err != nil {
-		return "", err
+        return "", fmt.Errorf("failed to complete request: %s", err)
 	}
 
 	req.Header.Set("User-Agent", "safespring-golang-client")
@@ -197,16 +198,13 @@ func (c *Client) makeRequest(contextPath string, method string, payload []byte) 
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return "", err
+        return "", fmt.Errorf("failed to retrieve response body: %s", err)
 	}
-
-	if resp.Body != nil {
-		defer resp.Body.Close()
-	}
+	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+        return "", fmt.Errorf("failed to read response body: %s", err)
 	}
 
 	return string(body), nil
@@ -230,7 +228,7 @@ func (c *Client) authenticate(client_id, username, password string) error {
 	req, err := http.NewRequest(http.MethodPost, viper.GetString("url")+authurl,
 		strings.NewReader(loginData.Encode()))
 	if err != nil {
-		return err
+		return fmt.Errorf("error creating request: %v", err)
 	}
 
 	req.Header.Set("User-Agent", "safespring-golang-client")
@@ -240,7 +238,7 @@ func (c *Client) authenticate(client_id, username, password string) error {
 
 	res, err := c.httpClient.Do(req)
 	if err != nil {
-		return err
+        return fmt.Errorf("failed to complete authentication request: %s", err)
 	}
 
 	if res.Body != nil {
@@ -249,11 +247,11 @@ func (c *Client) authenticate(client_id, username, password string) error {
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return err
+        return fmt.Errorf("failed to read authentication response: %s", err)
 	}
 
 	if err := json.Unmarshal([]byte(body), &c); err != nil {
-		return err
+        return fmt.Errorf("failed to decode authentication response: %s", err)
 	}
 
 	return nil
