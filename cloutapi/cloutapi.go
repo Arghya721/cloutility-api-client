@@ -22,70 +22,100 @@ import (
 	"github.com/spf13/viper"
 )
 
+type Client struct {
+	httpClient   *http.Client
+	AccessToken  string `json:"access_token"`
+	TokenType    string `json:"token_type"`
+	Expires      int    `json:"expires_in"`
+	RefreshToken string `json:"refresh_token"`
+}
+
 func RunClient() {
+	var (
+		c          Client
+		user       me
+		myConsumer consumer
+		myNode     node
+	)
 
-	var myauth auth
-	var user me
-	var myConsumer consumer
-	var myNode node
+	// Initialize http.Client
+	c.httpClient = &http.Client{
+		Timeout: time.Second * 10,
+	}
 
-	myauth = doLogin(
+	// Get Auth token by passing username, password and client_id from config file
+	err := c.authenticate(
 		viper.GetString("client_id"),
 		viper.GetString("username"),
 		viper.GetString("password"),
 	)
-
-	if viper.GetBool("debug") {
-		fmt.Println("Token type:", myauth.TokenType)
-		fmt.Println("Expires:", myauth.Expires)
-		fmt.Println("Refresh token:", myauth.RefreshToken)
-		fmt.Println("Access token:", myauth.AccessToken)
+	if err != nil {
+		log.Printf("Error authenticating: %s", err)
 	}
 
-	user = getUser(myauth)
-
 	if viper.GetBool("debug") {
-		fmt.Println(user.Name)
-		fmt.Println(user.BusinessUnit.Name)
-		fmt.Println(user.BusinessUnit.ID)
+		log.Println("Token type:", c.TokenType)
+		log.Println("Expires:", c.Expires)
+		log.Println("Refresh token:", c.RefreshToken)
+		log.Println("Access token:", c.AccessToken)
 	}
 
-	fmt.Println(getNode(myauth))
+	user, err = c.getUser()
+	if err != nil {
+		log.Println("Error retrieving userdata: ", err)
+	}
+
+	if viper.GetBool("debug") {
+		log.Println(user.Name)
+		log.Println(user.BusinessUnit.Name)
+		log.Println(user.BusinessUnit.ID)
+	}
+
+	node, err := c.getNode()
+	if err != nil {
+		log.Println("Error retrieving nodedata: ", err)
+	}
+	log.Println(node)
 
 	if viper.GetBool("dry-run") {
-		fmt.Println("running in dry-run mode, exiting")
+		log.Println("Running in dry-run mode, exiting")
 		os.Exit(0)
 	}
 
-	myConsumer = createConsumer(myauth, user.BusinessUnit.ID)
-	fmt.Println("Created a Consumer")
-	myNode = createNode(myauth, user.BusinessUnit.ID, myConsumer.ID)
-	fmt.Println("Created a Node")
-	fmt.Println(myNode)
+	c.createConsumer(user.BusinessUnit.ID)
+	log.Println("Created a Consumer")
+	c.createNode(user.BusinessUnit.ID, myConsumer.ID)
+	log.Println("Created a Node")
+	log.Println(myNode)
 }
 
-func getUser(myauth auth) me {
+func (c *Client) getUser() (me, error) {
 
 	var result me
 
-	will_print := 0
-
-	body := getRequest(myauth, "/v1/me", will_print)
-
-	if err := json.Unmarshal([]byte(body), &result); err != nil {
-		log.Fatal(err)
+	body, err := c.makeRequest("/v1/me", "GET", nil)
+	if err != nil {
+		return me{}, fmt.Errorf("error requesting userdata: %s", err)
 	}
 
-	return result
+	if err := json.Unmarshal([]byte(body), &result); err != nil {
+		return me{}, fmt.Errorf("error unmarshalling userdata: %s", err)
+	}
+
+	return result, nil
 
 }
 
-func getNode(myauth auth) string {
-	return getRequest(myauth, "/v1/bunits/17/consumers/31/node", 0)
+func (c *Client) getNode() (string, error) {
+	node, err := c.makeRequest("/v1/bunits/17/consumers/31/node", "GET", nil)
+	if err != nil {
+		return "", fmt.Errorf("error requesting nodedata: %s", err)
+	}
+	return node, nil
 	// XXX needs conf or code to use your bUnit/node instead
 }
 
-func createConsumer(myauth auth, myid int) consumer {
+func (c *Client) createConsumer(myid int) (consumer, error) {
 	var cons string
 	var newConsumer consumer
 
@@ -95,20 +125,21 @@ func createConsumer(myauth auth, myid int) consumer {
 	}
 	jsonBody, err := json.Marshal(name)
 	if err != nil {
-		fmt.Printf("Could not marshal data: %s", err)
+		return consumer{}, fmt.Errorf("error encoding json payload: %s", err)
 	}
-	// jsonBody := []byte(`{"name": "test-host-name-goes-here"}`)
-	// XXX name should come from input  ^^
 
-	cons = postRequest(myauth, createcons, jsonBody)
+	cons, err = c.makeRequest(createcons, http.MethodPost, jsonBody)
+	if err != nil {
+		return consumer{}, fmt.Errorf("error creating consumer: %s", err)
+	}
 	if err := json.Unmarshal([]byte(cons), &newConsumer); err != nil {
-		log.Fatal(err)
+        return consumer{}, fmt.Errorf("error decoding consumer response: %s", err)
 	}
 
-	return newConsumer
+	return newConsumer, nil
 }
 
-func createNode(myauth auth, myid int, myConsumer int) node {
+func (c *Client) createNode(myid int, myConsumer int) (node, error) {
 
 	var newNode node
 	var nodestr string
@@ -130,146 +161,74 @@ func createNode(myauth auth, myid int, myConsumer int) node {
 		"contact":  "Someone",
 		"cpuCount": 1,
 	}
-	jsonBody, err := json.Marshal(data)
+	payload, err := json.Marshal(data)
 	if err != nil {
-		fmt.Printf("Error marshaling data %s", err)
+		return node{}, fmt.Errorf("failed to encode json payload: %s", err)
 	}
 
-	// jsonBody := []byte(
-	// 	`{
-	//        "operatingSystem": {
-	//          "name": "Linux",
-	//        },
-	//        "type": {
-	//          "name": "File server",
-	//        },
-	//        "server": {
-	//           "name": "tsm12.backup.sto2.safedc.net",
-	//        },
-	//        "clientOptionSet": {
-	//          "name": "STANDARD",
-	//        },
-	//      "contact": "Someone",
-	//      "cpuCount": 1
-	//      }`)
-	// XXX hardcoded platform, needs conf
-
-	nodestr = postRequest(myauth, createstr, jsonBody)
+	nodestr, err = c.makeRequest(createstr, http.MethodPost, payload)
+	if err != nil {
+        return node{}, fmt.Errorf("failed to create node: %s", err)
+	}
 	if err := json.Unmarshal([]byte(nodestr), &newNode); err != nil {
-		log.Fatal(err)
+        return node{}, fmt.Errorf("failed to decode nodedata: %s", err)
 	}
 
-	return newNode
+	return newNode, nil
 
 }
 
-func postRequest(myauth auth, posturl string, jsonBody []byte) string {
+func (c *Client) makeRequest(contextPath string, method string, payload []byte) (string, error) {
 
-	postClient := http.Client{
-		Timeout: time.Second * 10,
+	var reader io.Reader
+	if payload != nil {
+		reader = bytes.NewReader(payload)
 	}
 
-	bodyReader := bytes.NewReader(jsonBody)
-
-	req, err := http.NewRequest(http.MethodPost, viper.GetString("url")+posturl, bodyReader)
+	req, err := http.NewRequest(method, viper.GetString("url")+contextPath, reader)
 	if err != nil {
-		log.Fatal(err)
+        return "", fmt.Errorf("failed to complete request: %s", err)
 	}
 
 	req.Header.Set("User-Agent", "safespring-golang-client")
 	req.Header.Set("Content-type", "application/json")
 	req.Header.Set("Origin", viper.GetString("client_origin"))
-	req.Header.Set("Authorization", "Bearer "+myauth.AccessToken)
+	req.Header.Set("Authorization", "Bearer "+c.AccessToken)
 	// XXX - needs conf file
 
-	resp, getErr := postClient.Do(req)
-	if getErr != nil {
-		fmt.Printf("HTTP: %s\n", resp.Status)
-		log.Fatal(getErr)
-	}
-
-	if resp.Body != nil {
-		defer resp.Body.Close()
-	}
-
-	if viper.GetBool("debug") {
-		fmt.Println("Body: ")
-		fmt.Println(resp.Body)
-	}
-
-	body, readErr := io.ReadAll(resp.Body)
-	if readErr != nil {
-		fmt.Printf("HTTP: %s\n", resp.Status)
-		log.Fatal(readErr)
-	}
-
-	return string(body)
-}
-
-func getRequest(myauth auth, geturl string, print int) string {
-
-	getClient := http.Client{
-		Timeout: time.Second * 10,
-	}
-
-	req, err := http.NewRequest(http.MethodGet, viper.GetString("url")+geturl, nil)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		log.Fatal(err)
+        return "", fmt.Errorf("failed to retrieve response body: %s", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+        return "", fmt.Errorf("failed to read response body: %s", err)
 	}
 
-	req.Header.Set("User-Agent", "safespring-golang-client")
-	req.Header.Set("Content-type", "application/json")
-	req.Header.Set("Origin", viper.GetString("client_origin"))
-	req.Header.Set("Authorization", "Bearer "+myauth.AccessToken)
-	// XXX - needs conf file
-
-	resp, getErr := getClient.Do(req)
-	if getErr != nil {
-		fmt.Printf("HTTP: %s\n", resp.Status)
-		log.Fatal(getErr)
-	}
-
-	if resp.Body != nil {
-		defer resp.Body.Close()
-	}
-
-	body, readErr := io.ReadAll(resp.Body)
-	if readErr != nil {
-		fmt.Printf("HTTP: %s\n", resp.Status)
-		log.Fatal(readErr)
-	}
-
-	if print > 0 {
-		fmt.Println(string(body))
-	}
-
-	return string(body)
+	return string(body), nil
 }
 
-func doLogin(client_id, username, password string) auth {
+func (c *Client) authenticate(client_id, username, password string) error {
 
 	authurl := "/v1/oauth"
-
-	loginClient := http.Client{
-		Timeout: time.Second * 10,
-	}
 
 	loginData := url.Values{}
 	loginData.Add("client_id", client_id)
 	loginData.Add("grant_type", "password")
 	loginData.Add("username", username)
 	loginData.Add("password", password)
-	// XXX - needs conf file
 
 	if viper.GetBool("debug") {
-		fmt.Println("data:\n", loginData)
-		fmt.Println("enpoint:", viper.GetString("url")+authurl)
+		log.Println("data:\n", loginData)
+		log.Println("enpoint:", viper.GetString("url")+authurl)
 	}
 
 	req, err := http.NewRequest(http.MethodPost, viper.GetString("url")+authurl,
 		strings.NewReader(loginData.Encode()))
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("error creating request: %v", err)
 	}
 
 	req.Header.Set("User-Agent", "safespring-golang-client")
@@ -277,29 +236,24 @@ func doLogin(client_id, username, password string) auth {
 	req.Header.Set("Origin", viper.GetString("client_origin"))
 	// XXX - needs conf file
 
-	res, getErr := loginClient.Do(req)
-	if getErr != nil {
-		fmt.Printf("HTTP: %s\n", res.Status)
-		log.Fatal(getErr)
+	res, err := c.httpClient.Do(req)
+	if err != nil {
+        return fmt.Errorf("failed to complete authentication request: %s", err)
 	}
 
 	if res.Body != nil {
 		defer res.Body.Close()
 	}
 
-	body, readErr := io.ReadAll(res.Body)
-	if readErr != nil {
-		fmt.Printf("HTTP: %s\n", res.Status)
-		log.Fatal(readErr)
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+        return fmt.Errorf("failed to read authentication response: %s", err)
 	}
 
-	// fmt.Println("Body1: ", string(body))
-
-	//	var result map[string]interface{}
-	var result auth
-	if err := json.Unmarshal([]byte(body), &result); err != nil {
-		log.Fatal(err)
+	if err := json.Unmarshal([]byte(body), &c); err != nil {
+        return fmt.Errorf("failed to decode authentication response: %s", err)
 	}
 
-	return result
+	return nil
+
 }

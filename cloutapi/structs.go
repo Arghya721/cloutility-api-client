@@ -2,13 +2,6 @@ package cloutapi
 
 import "time"
 
-type auth struct {
-	AccessToken  string `json:"access_token"`
-	TokenType    string `json:"token_type"`
-	Expires      int    `json:"expires_in"`
-	RefreshToken string `json:"refresh_token"`
-}
-
 type me struct {
 	Actions []struct {
 		Href   string `json:"href"`
