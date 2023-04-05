@@ -15,7 +15,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -23,7 +22,8 @@ import (
 )
 
 type AuthenticatedClient struct {
-	httpClient   *http.Client
+	HttpClient   *http.Client
+	BaseURL      string
 	AccessToken  string `json:"access_token"`
 	TokenType    string `json:"token_type"`
 	Expires      int    `json:"expires_in"`
@@ -44,6 +44,7 @@ func RunClient() {
 		viper.GetString("client_origin"),
 		viper.GetString("username"),
 		viper.GetString("password"),
+		viper.GetString("url"),
 	)
 	if err != nil {
 		log.Printf("Error authenticating: %s", err)
@@ -68,7 +69,7 @@ func RunClient() {
 		log.Println(user.BusinessUnit.ID)
 	}
 
-	node, err := c.getNode()
+	node, err := c.GetNode()
 	if err != nil {
 		log.Println("Error retrieving nodedata: ", err)
 	}
@@ -79,9 +80,9 @@ func RunClient() {
 		os.Exit(0)
 	}
 
-	c.createConsumer(user.BusinessUnit.ID)
+	c.CreateConsumer(user.BusinessUnit.ID, viper.GetString("node_name"))
 	log.Println("Created a Consumer")
-	c.createNode(user.BusinessUnit.ID, myConsumer.ID)
+	c.CreateNode(user.BusinessUnit.ID, myConsumer.ID)
 	log.Println("Created a Node")
 	log.Println(myNode)
 }
@@ -90,7 +91,7 @@ func (c *AuthenticatedClient) getUser() (me, error) {
 
 	var result me
 
-	body, err := c.makeRequest("/v1/me", "GET", nil)
+	body, err := c.apiRequest("/v1/me", "GET", nil)
 	if err != nil {
 		return me{}, fmt.Errorf("error requesting userdata: %s", err)
 	}
@@ -103,86 +104,14 @@ func (c *AuthenticatedClient) getUser() (me, error) {
 
 }
 
-func (c *AuthenticatedClient) getNode() (string, error) {
-	node, err := c.makeRequest("/v1/bunits/17/consumers/31/node", "GET", nil)
-	if err != nil {
-		return "", fmt.Errorf("error requesting nodedata: %s", err)
-	}
-	return node, nil
-	// XXX needs conf or code to use your bUnit/node instead
-}
-
-func (c *AuthenticatedClient) createConsumer(myid int) (consumer, error) {
-	var cons string
-	var newConsumer consumer
-
-	createcons := "/v1/bunits/" + strconv.Itoa(myid) + "/consumers"
-	name := map[string]string{
-		"name": viper.GetString("node_name"),
-	}
-	jsonBody, err := json.Marshal(name)
-	if err != nil {
-		return consumer{}, fmt.Errorf("error encoding json payload: %s", err)
-	}
-
-	cons, err = c.makeRequest(createcons, http.MethodPost, jsonBody)
-	if err != nil {
-		return consumer{}, fmt.Errorf("error creating consumer: %s", err)
-	}
-	if err := json.Unmarshal([]byte(cons), &newConsumer); err != nil {
-		return consumer{}, fmt.Errorf("error decoding consumer response: %s", err)
-	}
-
-	return newConsumer, nil
-}
-
-func (c *AuthenticatedClient) createNode(myid int, myConsumer int) (node, error) {
-
-	var newNode node
-	var nodestr string
-	createstr := "/v1/bunits/" + strconv.Itoa(myid) + "/consumers/" +
-		strconv.Itoa(myConsumer) + "/node"
-	data := map[string]interface{}{
-		"operatingSystem": map[string]string{
-			"name": "Linux",
-		},
-		"type": map[string]string{
-			"name": "File server",
-		},
-		"server": map[string]string{
-			"name": "tsm12.backup.sto2.safedc.net",
-		},
-		"clientOptionSet": map[string]string{
-			"name": "STANDARD",
-		},
-		"contact":  "Someone",
-		"cpuCount": 1,
-	}
-	payload, err := json.Marshal(data)
-	if err != nil {
-		return node{}, fmt.Errorf("failed to encode json payload: %s", err)
-	}
-
-	nodestr, err = c.makeRequest(createstr, http.MethodPost, payload)
-	if err != nil {
-		return node{}, fmt.Errorf("failed to create node: %s", err)
-	}
-	if err := json.Unmarshal([]byte(nodestr), &newNode); err != nil {
-		return node{}, fmt.Errorf("failed to decode nodedata: %s", err)
-	}
-
-	return newNode, nil
-
-}
-
-func (c *AuthenticatedClient) makeRequest(contextPath string, method string, payload []byte) (string, error) {
+func (c *AuthenticatedClient) apiRequest(contextPath string, method string, payload []byte) (string, error) {
 
 	var reader io.Reader
 	if payload != nil {
 		reader = bytes.NewReader(payload)
 	}
 
-	req, err := http.NewRequest(method, viper.GetString("url")+contextPath, reader)
+	req, err := http.NewRequest(method, c.BaseURL+contextPath, reader)
 	if err != nil {
 		return "", fmt.Errorf("failed to complete request: %s", err)
 	}
@@ -193,7 +122,7 @@ func (c *AuthenticatedClient) makeRequest(contextPath string, method string, pay
 	req.Header.Set("Authorization", "Bearer "+c.AccessToken)
 	// XXX - needs conf file
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.HttpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("failed to retrieve response body: %s", err)
 	}
@@ -208,12 +137,12 @@ func (c *AuthenticatedClient) makeRequest(contextPath string, method string, pay
 }
 
 // Initialize client and return an AuthenticatedClient
-func Init(client_id, origin, username, password string) (*AuthenticatedClient, error) {
+func Init(client_id, origin, username, password, baseURL string) (*AuthenticatedClient, error) {
 
 	var c AuthenticatedClient
 
 	// Initialize http.Client
-	c.httpClient = &http.Client{
+	c.HttpClient = &http.Client{
 		Timeout: time.Second * 10,
 	}
 
@@ -239,7 +168,7 @@ func Init(client_id, origin, username, password string) (*AuthenticatedClient, e
 	req.Header.Set("Content-type", "application/x-www-form-urlencoded")
 	req.Header.Set("Origin", origin)
 
-	res, err := c.httpClient.Do(req)
+	res, err := c.HttpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to complete authentication request: %s", err)
 	}
