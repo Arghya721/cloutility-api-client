@@ -58,7 +58,7 @@ func RunClient() {
 		log.Println("Access token:", c.AccessToken)
 	}
 
-	user, err = c.getUser()
+	user, err = c.GetUser()
 	if err != nil {
 		log.Println("Error retrieving userdata: ", err)
 	}
@@ -85,23 +85,6 @@ func RunClient() {
 	c.CreateNode(user.BusinessUnit.ID, myConsumer.ID)
 	log.Println("Created a Node")
 	log.Println(myNode)
-}
-
-func (c *AuthenticatedClient) getUser() (me, error) {
-
-	var result me
-
-	body, err := c.apiRequest("/v1/me", "GET", nil)
-	if err != nil {
-		return me{}, fmt.Errorf("error requesting userdata: %s", err)
-	}
-
-	if err := json.Unmarshal([]byte(body), &result); err != nil {
-		return me{}, fmt.Errorf("error unmarshalling userdata: %s", err)
-	}
-
-	return result, nil
-
 }
 
 func (c *AuthenticatedClient) apiRequest(contextPath string, method string, payload []byte) (string, error) {
@@ -146,6 +129,8 @@ func Init(client_id, origin, username, password, baseURL string) (*Authenticated
 		Timeout: time.Second * 10,
 	}
 
+	c.BaseURL = baseURL
+
 	authurl := "/v1/oauth"
 
 	loginData := url.Values{}
@@ -159,7 +144,7 @@ func Init(client_id, origin, username, password, baseURL string) (*Authenticated
 		log.Println("enpoint:", viper.GetString("url")+authurl)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, viper.GetString("url")+authurl, strings.NewReader(loginData.Encode()))
+	req, err := http.NewRequest(http.MethodPost, c.BaseURL+authurl, strings.NewReader(loginData.Encode()))
 	if err != nil {
 		return nil, fmt.Errorf("error creating request: %v", err)
 	}
