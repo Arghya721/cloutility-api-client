@@ -2,7 +2,7 @@ package cloutapi
 
 /* Copyright 2022-2023 (C) Blue Safespring AB
    Programmed by Jan Johansson
-   Contributions by Daniel Oquiñena and Patrik Lundin
+   Contributions by Daniel de Oquiñena and Patrik Lundin
    All rights reserved for now, will have liberal
    license later */
 
@@ -169,7 +169,7 @@ func Init(client_id, origin, username, password, baseURL string) (*Authenticated
 	}
 
 	if err := json.Unmarshal([]byte(body), &c); err != nil {
-		return &AuthenticatedClient{}, fmt.Errorf("failed to decode authentication response: %s", err)
+		return nil, fmt.Errorf("failed to decode authentication response: %s", err)
 	}
 
 	return &c, nil
