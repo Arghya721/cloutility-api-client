@@ -7,53 +7,74 @@ import (
 	"strconv"
 )
 
-func (c *AuthenticatedClient) CreateNode(myid int, myConsumer int) (node, error) {
+func (c *AuthenticatedClient) CreateNode(bUnitID int, consumerID int) (Node, error) {
+	var newNode Node
 
-	var newNode node
-	var nodestr string
-	createstr := "/v1/bunits/" + strconv.Itoa(myid) + "/consumers/" +
-		strconv.Itoa(myConsumer) + "/node"
+	endpoint := c.BaseURL + "/v1/bunits/" + strconv.Itoa(bUnitID) + "/consumers/" + strconv.Itoa(consumerID) + "/node"
+
+	// TODO: Parameterize
 	data := map[string]interface{}{
-		"operatingSystem": map[string]string{
-			"name": "Linux",
+		"OperatingSystem": map[string]int{
+			"ID": 1,
 		},
-		"type": map[string]string{
-			"name": "File server",
+		"Type": map[string]int{
+			"ID": 1,
 		},
-		"server": map[string]string{
-			"name": "tsm12.backup.sto2.safedc.net",
+		"Domain": map[string]int{
+			"ID": 1,
 		},
-		"clientOptionSet": map[string]string{
-			"name": "STANDARD",
+		"ClientOptionSet": map[string]int{
+			"ID": 1,
 		},
-		"contact":  "Someone",
-		"cpuCount": 1,
+		"contact":  "Daniel",
+		"CpuCount": 1,
 	}
+
 	payload, err := json.Marshal(data)
 	if err != nil {
-		return node{}, fmt.Errorf("failed to encode json payload: %s", err)
+		return Node{}, fmt.Errorf("failed to encode json payload: %s", err)
 	}
 
-	nodestr, err = c.apiRequest(createstr, http.MethodPost, payload)
+	resp, err := c.apiRequest(endpoint, http.MethodPost, payload)
 	if err != nil {
-		return node{}, fmt.Errorf("failed to create node: %s", err)
+		return Node{}, fmt.Errorf("failed to create node: %s", err)
 	}
-	if err := json.Unmarshal([]byte(nodestr), &newNode); err != nil {
-		return node{}, fmt.Errorf("failed to decode nodedata: %s", err)
+
+	if err := json.Unmarshal([]byte(resp), &newNode); err != nil {
+		return Node{}, fmt.Errorf("failed to decode nodedata: %s", err)
 	}
 
 	return newNode, nil
-
 }
 
-func (c *AuthenticatedClient) DeleteNode() (string, error) {
-	return "", nil
-}
+func (c *AuthenticatedClient) DeleteNode(id int) (Node, error) {
+	var node Node
 
-func (c *AuthenticatedClient) GetNode() (string, error) {
-	node, err := c.apiRequest("/v1/bunits/17/consumers/31/node", "GET", nil)
+	endpoint := c.BaseURL + "/v1/bunits/17/consumers/" + strconv.Itoa(id) + "/node?deleteAssociations=True"
+	fmt.Println(endpoint)
+
+	resp, err := c.apiRequest(endpoint, http.MethodDelete, nil)
 	if err != nil {
-		return "", fmt.Errorf("error requesting nodedata: %s", err)
+		return Node{}, fmt.Errorf("error requesting nodedata: %s", err)
+	}
+	if err := json.Unmarshal([]byte(resp), &node); err != nil {
+		return Node{}, fmt.Errorf("failed to decode nodedata: %s", err)
+	}
+	return node, nil
+}
+
+func (c *AuthenticatedClient) GetNode(userID, consumerID int) (Node, error) {
+
+	var node Node
+
+	endpoint := c.BaseURL + "/v1/bunits/" + strconv.Itoa(userID) + "/consumers/" + strconv.Itoa(consumerID) + "/node"
+
+	resp, err := c.apiRequest(endpoint, http.MethodGet, nil)
+	if err != nil {
+		return Node{}, fmt.Errorf("error requesting nodedata: %s", err)
+	}
+	if err := json.Unmarshal([]byte(resp), &node); err != nil {
+		return Node{}, fmt.Errorf("failed to decode nodedata: %s", err)
 	}
 	return node, nil
 	// XXX needs conf or code to use your bUnit/node instead

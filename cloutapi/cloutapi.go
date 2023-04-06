@@ -8,6 +8,7 @@ package cloutapi
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -33,13 +34,14 @@ type AuthenticatedClient struct {
 // Temporary function for testing purposes
 func RunClient() {
 	var (
-		user       me
-		myConsumer consumer
-		myNode     node
+		user me
+		// myConsumer consumer
+		// myNode     node
 	)
 
 	// Initialize client by passing username, password and client_id from config file
 	c, err := Init(
+		context.TODO(),
 		viper.GetString("client_id"),
 		viper.GetString("client_origin"),
 		viper.GetString("username"),
@@ -51,50 +53,72 @@ func RunClient() {
 		os.Exit(1)
 	}
 
-	if viper.GetBool("debug") {
-		log.Println("Token type:", c.TokenType)
-		log.Println("Expires:", c.Expires)
-		log.Println("Refresh token:", c.RefreshToken)
-		log.Println("Access token:", c.AccessToken)
-	}
+	// if viper.GetBool("debug") {
+	// 	log.Println("Token type:", c.TokenType)
+	// 	log.Println("Expires:", c.Expires)
+	// 	log.Println("Refresh token:", c.RefreshToken)
+	// 	log.Println("Access token:", c.AccessToken)
+	// }
 
 	user, err = c.GetUser()
 	if err != nil {
 		log.Println("Error retrieving userdata: ", err)
 	}
 
-	if viper.GetBool("debug") {
-		log.Println(user.Name)
-		log.Println(user.BusinessUnit.Name)
-		log.Println(user.BusinessUnit.ID)
-	}
+	fmt.Println("USER: ", user, "\n\n")
 
-	node, err := c.GetNode()
-	if err != nil {
-		log.Println("Error retrieving nodedata: ", err)
-	}
-	log.Println(node)
+	// if viper.GetBool("debug") {
+	// 	log.Println(user.Name)
+	// 	log.Println(user.BusinessUnit.Name)
+	// 	log.Println(user.BusinessUnit.ID)
+	// }
+
+	// node, err := c.GetNode(user.BusinessUnitID, user.ID)
+	// if err != nil {
+	// 	log.Println("Error retrieving nodedata: ", err)
+	// }n
+	// fmt.Println("NODE1: ", node, "\n\n")
 
 	if viper.GetBool("dry-run") {
 		log.Println("Running in dry-run mode, exiting")
 		os.Exit(0)
 	}
 
-	c.CreateConsumer(user.BusinessUnit.ID, viper.GetString("node_name"))
-	log.Println("Created a Consumer")
-	c.CreateNode(user.BusinessUnit.ID, myConsumer.ID)
-	log.Println("Created a Node")
-	log.Println(myNode)
+	consumer, err := c.CreateConsumer(user.BusinessUnit.ID, "testar")
+	if err != nil {
+		log.Println(err)
+	}
+	fmt.Println(user.BusinessUnit.ID, " ", consumer.ID)
+	fmt.Println("CONSUMER: ", consumer, "\n\n")
+	node, err := c.CreateNode(user.BusinessUnit.ID, consumer.ID)
+	if err != nil {
+		log.Println(err)
+	}
+	fmt.Println("NODE2: ", node, "\n\n")
+	node, err = c.DeleteNode(node.ID)
+	if err != nil {
+		log.Println(err)
+	}
+	fmt.Println("NODE DELETED: ", node, "\n\n")
+	// log.Println(myNode)
+	fmt.Println(c.AccessToken)
+	ok, err := c.DeleteConsumer(user.BusinessUnit.ID, consumer.ID)
+	if err != nil {
+		log.Println(err)
+	}
+	fmt.Println(user.BusinessUnit.ID, " ", consumer.ID)
+	fmt.Println("DETETED: ", ok, "\n\n")
 }
 
-func (c *AuthenticatedClient) apiRequest(contextPath string, method string, payload []byte) (string, error) {
+func (c *AuthenticatedClient) apiRequest(endpoint string, method string, payload []byte) (string, error) {
+	ctx := context.Background()
 
 	var reader io.Reader
 	if payload != nil {
 		reader = bytes.NewReader(payload)
 	}
 
-	req, err := http.NewRequest(method, c.BaseURL+contextPath, reader)
+	req, err := http.NewRequestWithContext(ctx, method, endpoint, reader)
 	if err != nil {
 		return "", fmt.Errorf("failed to complete request: %s", err)
 	}
@@ -111,6 +135,12 @@ func (c *AuthenticatedClient) apiRequest(contextPath string, method string, payl
 	}
 	defer resp.Body.Close()
 
+	// Check response code and return error if not 2xx
+	statusOK := resp.StatusCode >= 200 && resp.StatusCode < 300
+	if !statusOK {
+		return "", fmt.Errorf("error response %v", resp.StatusCode)
+	}
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", fmt.Errorf("failed to read response body: %s", err)
@@ -120,8 +150,7 @@ func (c *AuthenticatedClient) apiRequest(contextPath string, method string, payl
 }
 
 // Initialize client and return an AuthenticatedClient
-func Init(client_id, origin, username, password, baseURL string) (*AuthenticatedClient, error) {
-
+func Init(ctx context.Context, client_id, origin, username, password, baseURL string) (*AuthenticatedClient, error) {
 	var c AuthenticatedClient
 
 	// Initialize http.Client
@@ -129,26 +158,24 @@ func Init(client_id, origin, username, password, baseURL string) (*Authenticated
 		Timeout: time.Second * 10,
 	}
 
+	// Get baseurl from passed variable
 	c.BaseURL = baseURL
 
 	authurl := "/v1/oauth"
 
+	// Construct body
 	loginData := url.Values{}
 	loginData.Add("client_id", client_id)
 	loginData.Add("grant_type", "password")
 	loginData.Add("username", username)
 	loginData.Add("password", password)
 
-	if viper.GetBool("debug") {
-		log.Println("data:\n", loginData)
-		log.Println("enpoint:", viper.GetString("url")+authurl)
-	}
-
-	req, err := http.NewRequest(http.MethodPost, c.BaseURL+authurl, strings.NewReader(loginData.Encode()))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.BaseURL+authurl, strings.NewReader(loginData.Encode()))
 	if err != nil {
 		return nil, fmt.Errorf("error creating request: %v", err)
 	}
 
+	// Set header propertys
 	req.Header.Set("User-Agent", "safespring-golang-client")
 	req.Header.Set("Content-type", "application/x-www-form-urlencoded")
 	req.Header.Set("Origin", origin)
@@ -173,5 +200,4 @@ func Init(client_id, origin, username, password, baseURL string) (*Authenticated
 	}
 
 	return &c, nil
-
 }
