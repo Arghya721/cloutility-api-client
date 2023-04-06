@@ -47,9 +47,5 @@ func (c *AuthenticatedClient) GetNodeOperatingSystem() ([]NodeOperatingSystems, 
 
 	osList = append(osList, osResponse.Items...)
 
-	// for _, v := range osResponse.Items {
-	// 	osList = append(osList, v)
-	// }
-
 	return osList, nil
 }
