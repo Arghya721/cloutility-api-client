@@ -45,7 +45,6 @@ func (c *AuthenticatedClient) apiRequest(endpoint string, method string, payload
 	req.Header.Set("Content-type", "application/json")
 	req.Header.Set("Origin", c.Origin)
 	req.Header.Set("Authorization", "Bearer "+c.AccessToken)
-	// XXX - needs conf file
 
 	resp, err := c.HttpClient.Do(req)
 	if err != nil {
