@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-func (c *AuthenticatedClient) CreateNode(bUnitID int, consumerID int) (Node, error) {
+func (c *AuthenticatedClient) CreateNode(bUnitID, consumerID, osType, clientType, domain, clientOptionSet int, contact string) (Node, error) {
 	var newNode Node
 
 	endpoint := c.BaseURL + "/v1/bunits/" + strconv.Itoa(bUnitID) + "/consumers/" + strconv.Itoa(consumerID) + "/node"
@@ -15,18 +15,18 @@ func (c *AuthenticatedClient) CreateNode(bUnitID int, consumerID int) (Node, err
 	// TODO: Parameterize
 	data := map[string]interface{}{
 		"OperatingSystem": map[string]int{
-			"ID": 1,
+			"ID": osType,
 		},
 		"Type": map[string]int{
-			"ID": 1,
+			"ID": clientType,
 		},
 		"Domain": map[string]int{
-			"ID": 1,
+			"ID": domain,
 		},
 		"ClientOptionSet": map[string]int{
-			"ID": 1,
+			"ID": clientOptionSet,
 		},
-		"contact":  "Daniel",
+		"contact":  contact,
 		"CpuCount": 1,
 	}
 
