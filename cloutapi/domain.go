@@ -8,15 +8,15 @@ import (
 	"time"
 )
 
-type Domain struct {
-	Href   string    `json:"href"`
-	Total  int       `json:"total"`
-	Offset int       `json:"offset"`
-	First  string    `json:"first"`
-	Items  []Domains `json:"items"`
+type domains struct {
+	Href   string   `json:"href"`
+	Total  int      `json:"total"`
+	Offset int      `json:"offset"`
+	First  string   `json:"first"`
+	Items  []Domain `json:"items"`
 }
 
-type Domains struct {
+type Domain struct {
 	Href             string    `json:"href"`
 	Name             string    `json:"name"`
 	Description      string    `json:"description"`
@@ -27,9 +27,11 @@ type Domains struct {
 	CreatedDate      time.Time `json:"createdDate"`
 }
 
-func (c *AuthenticatedClient) GetDomains(bUnitID int) ([]Domains, error) {
-	var domain Domain
-	var domains []Domains
+func (c *AuthenticatedClient) GetDomains(bUnitID int) ([]Domain, error) {
+	var (
+		list    domains
+		domains []Domain
+	)
 
 	endpoint := c.BaseURL + "/v1/bunits/" + strconv.Itoa(bUnitID) + "/defaultserver/domains"
 
@@ -37,11 +39,11 @@ func (c *AuthenticatedClient) GetDomains(bUnitID int) ([]Domains, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error requesting domains: %s", err)
 	}
-	if err := json.Unmarshal([]byte(resp), &domain); err != nil {
+	if err := json.Unmarshal([]byte(resp), &list); err != nil {
 		return nil, fmt.Errorf("failed to decode domaindata: %s", err)
 	}
 
-	domains = append(domains, domain.Items...)
+	domains = append(domains, list.Items...)
 
 	return domains, nil
 }
