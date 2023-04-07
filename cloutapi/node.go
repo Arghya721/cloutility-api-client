@@ -7,6 +7,12 @@ import (
 	"strconv"
 )
 
+type Node struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+	Href string `json:"href"`
+}
+
 func (c *AuthenticatedClient) CreateNode(bUnitID, consumerID, osType, clientType, domain, clientOptionSet int, contact string) (Node, error) {
 	var newNode Node
 
@@ -77,5 +83,4 @@ func (c *AuthenticatedClient) GetNode(userID, consumerID int) (Node, error) {
 		return Node{}, fmt.Errorf("failed to decode nodedata: %s", err)
 	}
 	return node, nil
-	// XXX needs conf or code to use your bUnit/node instead
 }
