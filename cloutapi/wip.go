@@ -11,11 +11,11 @@ import (
 
 // Temporary function for testing purposes
 func RunClient() {
-	var (
-		user me
-		// myConsumer consumer
-		// myNode     node
-	)
+	// var (
+	// 	user me
+	// myConsumer consumer
+	// myNode     node
+	// )
 
 	// Initialize client by passing username, password and client_id from config file
 	c, err := Init(
@@ -38,7 +38,7 @@ func RunClient() {
 	// 	log.Println("Access token:", c.AccessToken)
 	// }
 
-	user, err = c.GetUser()
+	user, err := c.GetUser()
 	if err != nil {
 		log.Println("Error retrieving userdata: ", err)
 	}
@@ -66,26 +66,35 @@ func RunClient() {
 	if err != nil {
 		log.Println(err)
 	}
-	fmt.Println(user.BusinessUnit.ID, " ", consumer.ID)
+	// fmt.Println(user.BusinessUnit.ID, " ", consumer.ID)
 	fmt.Println("CONSUMER: ", consumer, "\n\n")
-	node, err := c.CreateNode(user.BusinessUnit.ID, consumer.ID)
+
+	cons, err := c.GetConsumers(user.BusinessUnit.ID)
+	if err != nil {
+		log.Println(err)
+	}
+	for _, consumer := range cons {
+		fmt.Println(consumer.Name, consumer.ID)
+	}
+
+	node, err := c.CreateNode(user.BusinessUnit.ID, consumer.ID, int(3), int(2), int(6), int(1), "Daniel de Oquiñena")
 	if err != nil {
 		log.Println(err)
 	}
 	fmt.Println("NODE2: ", node, "\n\n")
-	node, err = c.DeleteNode(node.ID)
-	if err != nil {
-		log.Println(err)
-	}
-	fmt.Println("NODE DELETED: ", node, "\n\n")
+	// node, err = c.DeleteNode(node.ID)
+	// if err != nil {
+	// 	log.Println(err)
+	// }
+	// fmt.Println("NODE DELETED: ", node, "\n\n")
 	// log.Println(myNode)
 	fmt.Println(c.AccessToken)
-	ok, err := c.DeleteConsumer(user.BusinessUnit.ID, consumer.ID)
-	if err != nil {
-		log.Println(err)
-	}
-	fmt.Println(user.BusinessUnit.ID, " ", consumer.ID)
-	fmt.Println("DETETED: ", ok, "\n\n")
+	// ok, err := c.DeleteConsumer(user.BusinessUnit.ID, consumer.ID)
+	// if err != nil {
+	// 	log.Println(err)
+	// }
+	// fmt.Println(user.BusinessUnit.ID, " ", consumer.ID)
+	// fmt.Println("DETETED: ", ok, "\n\n")
 
 	osType, err := c.GetNodeOperatingSystem()
 	if err != nil {
@@ -98,7 +107,7 @@ func RunClient() {
 	if err != nil {
 		log.Println(err)
 	}
-	for _, v := range domains {
-		fmt.Println(v.Name, v.ID)
+	for _, domain := range domains {
+		fmt.Println(domain.Name, domain.ID)
 	}
 }
