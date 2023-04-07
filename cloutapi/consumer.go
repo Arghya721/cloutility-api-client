@@ -24,8 +24,10 @@ type Consumer struct {
 }
 
 func (c *AuthenticatedClient) CreateConsumer(bUnitID int, nodename string) (Consumer, error) {
-	var cons string
-	var consumer Consumer
+	var (
+		cons     string
+		consumer Consumer
+	)
 
 	endpoint := c.BaseURL + "/v1/bunits/" + strconv.Itoa(bUnitID) + "/consumers"
 	name := map[string]string{

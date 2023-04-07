@@ -25,6 +25,7 @@ type BusinessUnit struct {
 
 func (c *AuthenticatedClient) GetUser() (*User, error) {
 	var user User
+
 	endpoint := c.BaseURL + "/v1/me"
 
 	body, err := c.apiRequest(endpoint, http.MethodGet, nil)

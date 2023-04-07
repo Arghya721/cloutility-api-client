@@ -32,8 +32,10 @@ type supportedNodeTypes struct {
 }
 
 func (c *AuthenticatedClient) GetNodeOperatingSystem() ([]NodeOperatingSystem, error) {
-	var list nodeOperatingSystems
-	var nodeOSes []NodeOperatingSystem
+	var (
+		list     nodeOperatingSystems
+		nodeOSes []NodeOperatingSystem
+	)
 
 	endpoint := c.BaseURL + "/v1/nodeoperatingsystems"
 
