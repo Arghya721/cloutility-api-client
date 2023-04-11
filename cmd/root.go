@@ -16,21 +16,15 @@ import (
 	"github.com/spf13/viper"
 )
 
-// rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "cloutility-api-client",
 	Short: "client used for managing resources in Safespring BaaS 2.0",
 	Long: `cloutility-api-client is used for managing resources in
 Safespring BaaS 2.0 using the Cloutility REST API.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
 }
 
 var cfgFile string
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
@@ -39,13 +33,9 @@ func Execute() {
 }
 
 func initConfig() {
-	// Don't forget to read config either from cfgFile or from home directory!
 	if cfgFile != "" {
-		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
-		// viper.SetConfigType("properties")
 	} else {
-		// Search config in home directory with name ".cobra" (without extension).
 		viper.AddConfigPath(".")
 		viper.SetConfigName("cloutility-api-client")
 		viper.SetConfigType("properties")
@@ -70,12 +60,4 @@ func init() {
 	if err != nil {
 		panic(fmt.Errorf("error parsing flags: %w", err))
 	}
-
-	// viper.SetConfigName("config")
-	// viper.AddConfigPath(".")
-	// err = viper.ReadInConfig()
-	// if err != nil {
-	// 	panic(fmt.Errorf("error reading config file: %w", err))
-	// }
-
 }
