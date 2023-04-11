@@ -28,44 +28,6 @@ type AuthenticatedClient struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
-func (c *AuthenticatedClient) apiRequest(endpoint string, method string, payload []byte) (string, error) {
-	ctx := context.Background()
-
-	var reader io.Reader
-	if payload != nil {
-		reader = bytes.NewReader(payload)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, method, endpoint, reader)
-	if err != nil {
-		return "", fmt.Errorf("failed to complete request: %s", err)
-	}
-
-	req.Header.Set("User-Agent", "safespring-golang-client")
-	req.Header.Set("Content-type", "application/json")
-	req.Header.Set("Origin", c.Origin)
-	req.Header.Set("Authorization", "Bearer "+c.AccessToken)
-
-	resp, err := c.HttpClient.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("failed to retrieve response body: %s", err)
-	}
-	defer resp.Body.Close()
-
-	// Check response code and return error if not 2xx
-	statusOK := resp.StatusCode >= 200 && resp.StatusCode < 300
-	if !statusOK {
-		return "", fmt.Errorf("error response %v", resp.StatusCode)
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("failed to read response body: %s", err)
-	}
-
-	return string(body), nil
-}
-
 // Initialize client and return an AuthenticatedClient
 func Init(ctx context.Context, client_id, origin, username, password, baseURL string) (*AuthenticatedClient, error) {
 	var c AuthenticatedClient
@@ -118,4 +80,42 @@ func Init(ctx context.Context, client_id, origin, username, password, baseURL st
 	}
 
 	return &c, nil
+}
+
+func (c *AuthenticatedClient) apiRequest(endpoint string, method string, payload []byte) (string, error) {
+	ctx := context.Background()
+
+	var reader io.Reader
+	if payload != nil {
+		reader = bytes.NewReader(payload)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, method, endpoint, reader)
+	if err != nil {
+		return "", fmt.Errorf("failed to complete request: %s", err)
+	}
+
+	req.Header.Set("User-Agent", "safespring-golang-client")
+	req.Header.Set("Content-type", "application/json")
+	req.Header.Set("Origin", c.Origin)
+	req.Header.Set("Authorization", "Bearer "+c.AccessToken)
+
+	resp, err := c.HttpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to retrieve response body: %s", err)
+	}
+	defer resp.Body.Close()
+
+	// Check response code and return error if not 2xx
+	statusOK := resp.StatusCode >= 200 && resp.StatusCode < 300
+	if !statusOK {
+		return "", fmt.Errorf("error response %v", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response body: %s", err)
+	}
+
+	return string(body), nil
 }
