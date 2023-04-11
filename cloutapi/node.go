@@ -70,7 +70,6 @@ func (c *AuthenticatedClient) DeleteNode(id int) (Node, error) {
 }
 
 func (c *AuthenticatedClient) GetNode(userID, consumerID int) (Node, error) {
-
 	var node Node
 
 	endpoint := c.BaseURL + "/v1/bunits/" + strconv.Itoa(userID) + "/consumers/" + strconv.Itoa(consumerID) + "/node"
