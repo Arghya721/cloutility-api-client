@@ -14,8 +14,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-// listOstypesCmd represents the listOstypes command
-var listOstypesCmd = &cobra.Command{
+var listOSTypesCmd = &cobra.Command{
 	Use:   "ostypes",
 	Short: "list ostypes will list the available OS types when enrolling a new backup node",
 	Long: `
@@ -59,15 +58,5 @@ func listOSTypes() {
 }
 
 func init() {
-	listCmd.AddCommand(listOstypesCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// listOstypesCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// listOstypesCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	listCmd.AddCommand(listOSTypesCmd)
 }

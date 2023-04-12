@@ -12,7 +12,7 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "list subcommand",
 	Long: `
-The list subcommand is used for listing various resources available.
+The list subcommand is used for listing various resources available on the backup server.
 	`,
 }
 

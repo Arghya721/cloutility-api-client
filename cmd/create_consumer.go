@@ -16,8 +16,8 @@ var createNodeCmd = &cobra.Command{
 	Use:   "consumer",
 	Short: "Create new consumer and associated backup node",
 	Long: `
-The create node command creates a new consumer / consumtion-unit and an 
-associated backup node that you can then use for TSM backups.
+The create consumer command creates a new consumer / consumtion-unit and an 
+associated backup node that you can be used for TSM backups.
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		createConsumer()
@@ -75,14 +75,13 @@ func createConsumer() {
 }
 
 func init() {
-	// Init cmd
 	createCmd.AddCommand(createNodeCmd)
 
 	// Add flags
 	createNodeCmd.Flags().StringVarP(&name, "name", "n", "", "name of the node (required)")
 	createNodeCmd.Flags().StringVar(&contact, "contact", "Safespring", "Name to be set as contact")
 	createNodeCmd.Flags().IntVar(&osType, "ostype", 3, "Set the os type")
-	createNodeCmd.Flags().IntVar(&clientType, "clientype", 2, "Set the client type")
+	createNodeCmd.Flags().IntVar(&clientType, "clienttype", 2, "Set the client type")
 	createNodeCmd.Flags().IntVar(&domain, "domain", 6, "Set the domain to be used")
 
 	// Mark --name as required
@@ -91,10 +90,4 @@ func init() {
 		fmt.Println("error marking name flag as required: %w", err)
 		os.Exit(1)
 	}
-
-	// Link cobra with viper
-	// err = viper.BindPFlag("node-name", createNodeCmd.Flags().Lookup("name"))
-	// if err != nil {
-	// 	panic(fmt.Errorf("error parsing node-name flag: %w", err))
-	// }
 }

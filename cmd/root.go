@@ -49,8 +49,8 @@ func initConfig() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is ./cloutility-api-client.properties)")
-	rootCmd.PersistentFlags().Bool("debug", false, "print debug information")
-	rootCmd.PersistentFlags().Bool("dry-run", false, "do not actually create anything")
+	// rootCmd.PersistentFlags().Bool("debug", false, "print debug information")
+	// rootCmd.PersistentFlags().Bool("dry-run", false, "do not actually create anything")
 
 	// Link cobra with viper
 	err := viper.BindPFlags(rootCmd.PersistentFlags())

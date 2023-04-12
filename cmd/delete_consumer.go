@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"text/tabwriter"
 
 	"github.com/safespring/cloutility-api-client/cloutapi"
 	"github.com/spf13/cobra"
@@ -26,6 +27,7 @@ backup node.
 var consumerID int
 
 func deleteConsumer() {
+	var selectedConsumer cloutapi.Consumer
 	client, err := cloutapi.Init(
 		context.Background(),
 		viper.GetString("client_id"),
@@ -39,28 +41,31 @@ func deleteConsumer() {
 		os.Exit(1)
 	}
 
+	twriter := new(tabwriter.Writer)
+	twriter.Init(os.Stdout, 8, 8, 1, '\t', 0)
+	defer twriter.Flush()
+
 	user, err := client.GetUser()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	// consumers, err := client.GetConsumers(user.BusinessUnit.ID)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	os.Exit(1)
-	// }
+	fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\n", "ID", "Name", "Status", "Url")
+	fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\n", "--", "----", "------", "---")
 
-	// for _, consumer := range consumers {
-	// 	fmt.Println(consumer.ID)
-	// }
-
-	if err := client.DeleteConsumer(user.BusinessUnit.ID, consumerID); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	consumers, _ := client.GetConsumers(user.BusinessUnit.ID)
+	for _, consumer := range consumers {
+		if consumer.ID == consumerID {
+			selectedConsumer = consumer
+		}
 	}
 
-	fmt.Printf("SUCCESS: Node %v (ID: %v) deleted\n", consumerID, consumerID)
+	if err := client.DeleteConsumer(user.BusinessUnit.ID, consumerID); err != nil {
+		fmt.Fprintf(twriter, "%v\t%s\t%s\t%s\n", consumerID, selectedConsumer.Name, err, selectedConsumer.Href)
+		os.Exit(1)
+	}
+	fmt.Fprintf(twriter, "%v\t%s\t%s\t%s\n", consumerID, selectedConsumer.Name, "DELETED", selectedConsumer.Href)
 }
 
 func init() {
