@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"text/tabwriter"
 
 	"github.com/safespring/cloutility-api-client/cloutapi"
 	"github.com/spf13/cobra"
@@ -12,11 +13,14 @@ import (
 
 // nodeCmd represents the node command
 var createNodeCmd = &cobra.Command{
-	Use:   "node",
-	Short: "Create new backup node",
-	Long:  `This command creates a new backup node that you can then use for TSM backups.`,
+	Use:   "consumer",
+	Short: "Create new consumer and associated backup node",
+	Long: `
+The create node command creates a new consumer / consumtion-unit and an 
+associated backup node that you can then use for TSM backups.
+	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		createNode()
+		createConsumer()
 	},
 }
 
@@ -28,7 +32,7 @@ var (
 	domain     int
 )
 
-func createNode() {
+func createConsumer() {
 	client, err := cloutapi.Init(
 		context.Background(),
 		viper.GetString("client_id"),
@@ -42,26 +46,32 @@ func createNode() {
 		os.Exit(1)
 	}
 
+	twriter := new(tabwriter.Writer)
+	twriter.Init(os.Stdout, 8, 8, 1, '\t', 0)
+	defer twriter.Flush()
+
 	user, err := client.GetUser()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+
+	fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\n", "ID", "Name", "Status", "Url")
+	fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\n", "--", "----", "------", "---")
+
 	consumer, err := client.CreateConsumer(user.BusinessUnit.ID, name)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Fprintf(twriter, "%v\t%s\t%s\t%s\n", "N/A", name, err, "N/A")
 		os.Exit(1)
 	}
 
-	fmt.Println(osType)
-	fmt.Println(contact)
-	node, err := client.CreateNode(user.BusinessUnit.ID, consumer.ID, osType, clientType, domain, int(1), contact)
+	_, err = client.CreateNode(user.BusinessUnit.ID, consumer.ID, osType, clientType, domain, int(1), contact)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\n", "N/A", name, err, "N/A")
 		os.Exit(1)
 	}
 
-	fmt.Printf("SUCCESS: Node %s (ID: %v) created\n", consumer.Name, node.ID)
+	fmt.Fprintf(twriter, "%v\t%s\t%s\t%s\n", consumer.ID, consumer.Name, "CREATED", consumer.Href)
 }
 
 func init() {
