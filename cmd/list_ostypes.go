@@ -15,7 +15,7 @@ import (
 )
 
 var listOSTypesCmd = &cobra.Command{
-	Use:   "ostypes",
+	Use:   "os-types",
 	Short: "list ostypes will list the available OS types when enrolling a new backup node",
 	Long: `
 The command will list all the available Operating System types supported by the 
@@ -44,8 +44,8 @@ func listOSTypes() {
 	twriter.Init(os.Stdout, 8, 8, 1, '\t', 0)
 	defer twriter.Flush()
 
-	fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\n", "ID", "Name", "Short name", "Url")
-	fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\n", "--", "----", "----------", "---")
+	fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\n", "ID", "Name", "Created date", "Url")
+	fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\n", "--", "----", "------------", "---")
 
 	ostypes, err := client.GetNodeOperatingSystem()
 	if err != nil {
