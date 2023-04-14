@@ -81,12 +81,12 @@ func init() {
 	createCmd.AddCommand(createConsumerCmd)
 
 	// Add flags
-	createConsumerCmd.Flags().StringVarP(&name, "name", "n", "", "Name of backup node (required)")
+	createConsumerCmd.Flags().StringVar(&name, "name", "", "Name of backup node (required)")
 	createConsumerCmd.Flags().StringVar(&contact, "contact", "Safespring", "Name of contact")
 	createConsumerCmd.Flags().IntVar(&osType, "os-type", 0, "ID of OS Type")
 	createConsumerCmd.Flags().IntVar(&clientType, "client-type", 0, "ID of client type")
 	createConsumerCmd.Flags().IntVar(&domain, "domain", 0, "ID of domain")
-	createConsumerCmd.Flags().IntVarP(&bunitId, "bunit-id", "i", 0, "ID of business unit in which to create consumer")
+	createConsumerCmd.Flags().IntVar(&bunitId, "bunit-id", 0, "ID of business unit in which to create consumer")
 
 	// Mark --name as required
 	err := createConsumerCmd.MarkFlagRequired("name")

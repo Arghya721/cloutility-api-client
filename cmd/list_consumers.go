@@ -69,5 +69,5 @@ func listConsumers() {
 
 func init() {
 	listCmd.AddCommand(listConsumersCmd)
-	listConsumersCmd.Flags().IntVarP(&bunitId, "bunit-id", "i", 0, "ID of business unit in which to list consumers")
+	listConsumersCmd.Flags().IntVar(&bunitId, "bunit-id", 0, "ID of business unit in which to list consumers")
 }

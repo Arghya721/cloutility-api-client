@@ -72,5 +72,5 @@ func listBUnits() {
 
 func init() {
 	listCmd.AddCommand(listBUnitsCmd)
-	listBUnitsCmd.Flags().IntVarP(&bunitId, "bunit-id", "i", 0, "ID of business unit to list")
+	listBUnitsCmd.Flags().IntVar(&bunitId, "bunit-id", 0, "ID of business unit to list")
 }
