@@ -45,33 +45,42 @@ func deleteConsumer() {
 	twriter.Init(os.Stdout, 8, 8, 1, '\t', 0)
 	defer twriter.Flush()
 
-	user, err := client.GetUser()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	if bunitId == 0 {
+		user, err := client.GetUser()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		bunitId = user.UserBUnit.ID
 	}
 
-	fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\n", "ID", "Name", "Status", "Url")
-	fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\n", "--", "----", "------", "---")
+	fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\t%s\n", "Consumer ID", "Business-unit ID", "Name", "Status", "Url")
+	fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\t%s\n", "-----------", "----------------", "----", "------", "---")
 
-	consumers, _ := client.GetConsumers(user.UserBUnit.ID)
+	consumers, _ := client.GetConsumers(bunitId)
 	for _, consumer := range consumers {
 		if consumer.ID == consumerID {
 			selectedConsumer = consumer
 		}
 	}
 
-	if err := client.DeleteConsumer(user.UserBUnit.ID, consumerID); err != nil {
-		fmt.Fprintf(twriter, "%v\t%s\t%s\t%s\n", consumerID, selectedConsumer.Name, err, selectedConsumer.Href)
-		os.Exit(1)
+	if selectedConsumer.ID == 0 {
+		fmt.Fprintf(twriter, "%v\tUser Default: %v\t%s\t%s\t%s\n", consumerID, bunitId, "NOT FOUND", "NOT FOUND", "NOT FOUND")
+		return
 	}
-	fmt.Fprintf(twriter, "%v\t%s\t%s\t%s\n", consumerID, selectedConsumer.Name, "DELETED", selectedConsumer.Href)
+
+	if err := client.DeleteConsumer(bunitId, consumerID); err != nil {
+		fmt.Fprintf(twriter, "%v\t%v\t%s\t%s\t%s\n", consumerID, bunitId, selectedConsumer.Name, err, selectedConsumer.Href)
+		return
+	}
+	fmt.Fprintf(twriter, "%v\t%v\t%s\t%s\t%s\n", consumerID, bunitId, selectedConsumer.Name, "DELETED", selectedConsumer.Href)
 }
 
 func init() {
 	deleteCmd.AddCommand(deleteConsumerCmd)
 
-	deleteConsumerCmd.Flags().IntVarP(&consumerID, "id", "i", -1, "ID of consumption-unit to delete")
+	deleteConsumerCmd.Flags().IntVar(&consumerID, "id", 0, "ID of consumption-unit to delete")
+	deleteConsumerCmd.Flags().IntVar(&bunitId, "bunit-id", 0, "ID of business-unit in which the consumption-unit resides")
 
 	// Mark --id as required
 	err := deleteConsumerCmd.MarkFlagRequired("id")
