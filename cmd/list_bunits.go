@@ -18,8 +18,8 @@ var listBUnitsCmd = &cobra.Command{
 	Use:   "bunits",
 	Short: "list bunits will list the available business units",
 	Long: `
-The command will list all the available Operating System types supported by the 
-backup server.	
+The command will list all the available business-units and decendant business-units
+which your user account has access to.	
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		listBUnits()
