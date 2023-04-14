@@ -54,7 +54,7 @@ func listDomains() {
 	fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\n", "ID", "Name", "Description", "Url")
 	fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\n", "--", "----", "-----------", "---")
 
-	domains, err := client.GetDomains(user.BusinessUnit.ID)
+	domains, err := client.GetDomains(user.UserBUnit.ID)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

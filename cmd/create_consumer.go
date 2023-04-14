@@ -12,7 +12,7 @@ import (
 )
 
 // nodeCmd represents the node command
-var createNodeCmd = &cobra.Command{
+var createConsumerCmd = &cobra.Command{
 	Use:   "consumer",
 	Short: "Create new consumer and associated backup node",
 	Long: `
@@ -50,22 +50,25 @@ func createConsumer() {
 	twriter.Init(os.Stdout, 8, 8, 1, '\t', 0)
 	defer twriter.Flush()
 
-	user, err := client.GetUser()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	if bunitId == 0 {
+		user, err := client.GetUser()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		bunitId = user.UserBUnit.ID
 	}
 
 	fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\n", "ID", "Name", "Status", "Url")
 	fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\n", "--", "----", "------", "---")
 
-	consumer, err := client.CreateConsumer(user.BusinessUnit.ID, name)
+	consumer, err := client.CreateConsumer(bunitId, name)
 	if err != nil {
 		fmt.Fprintf(twriter, "%v\t%s\t%s\t%s\n", "N/A", name, err, "N/A")
 		os.Exit(1)
 	}
 
-	_, err = client.CreateNode(user.BusinessUnit.ID, consumer.ID, osType, clientType, domain, int(1), contact)
+	_, err = client.CreateNode(bunitId, consumer.ID, osType, clientType, domain, int(1), contact)
 	if err != nil {
 		fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\n", "N/A", name, err, "N/A")
 		os.Exit(1)
@@ -75,17 +78,18 @@ func createConsumer() {
 }
 
 func init() {
-	createCmd.AddCommand(createNodeCmd)
+	createCmd.AddCommand(createConsumerCmd)
 
 	// Add flags
-	createNodeCmd.Flags().StringVarP(&name, "name", "n", "", "name of the node (required)")
-	createNodeCmd.Flags().StringVar(&contact, "contact", "Safespring", "Name to be set as contact")
-	createNodeCmd.Flags().IntVar(&osType, "ostype", 3, "Set the os type")
-	createNodeCmd.Flags().IntVar(&clientType, "clienttype", 2, "Set the client type")
-	createNodeCmd.Flags().IntVar(&domain, "domain", 6, "Set the domain to be used")
+	createConsumerCmd.Flags().StringVar(&name, "name", "", "Name of backup node (required)")
+	createConsumerCmd.Flags().StringVar(&contact, "contact", "Safespring", "Name of contact")
+	createConsumerCmd.Flags().IntVar(&osType, "os-type", 0, "ID of OS Type")
+	createConsumerCmd.Flags().IntVar(&clientType, "client-type", 0, "ID of client type")
+	createConsumerCmd.Flags().IntVar(&domain, "domain", 0, "ID of domain")
+	createConsumerCmd.Flags().IntVar(&bunitId, "bunit-id", 0, "ID of business unit in which to create consumer")
 
 	// Mark --name as required
-	err := createNodeCmd.MarkFlagRequired("name")
+	err := createConsumerCmd.MarkFlagRequired("name")
 	if err != nil {
 		fmt.Println("error marking name flag as required: %w", err)
 		os.Exit(1)

@@ -15,7 +15,7 @@ import (
 )
 
 var listOSTypesCmd = &cobra.Command{
-	Use:   "ostypes",
+	Use:   "os-types",
 	Short: "list ostypes will list the available OS types when enrolling a new backup node",
 	Long: `
 The command will list all the available Operating System types supported by the 

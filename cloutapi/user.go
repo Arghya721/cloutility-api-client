@@ -4,23 +4,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 )
 
 type User struct {
-	Href         string       `json:"href"`
-	ID           int          `json:"id"`
-	Locked       bool         `json:"locked"`
-	Name         string       `json:"name"`
-	BusinessUnit BusinessUnit `json:"businessUnit"`
+	Href      string    `json:"href"`
+	ID        int       `json:"id"`
+	Locked    bool      `json:"locked"`
+	Name      string    `json:"name"`
+	UserBUnit UserBUnit `json:"businessUnit"`
 }
 
-type BusinessUnit struct {
-	Type        string    `json:"$type"`
-	CreatedDate time.Time `json:"createdDate"`
-	Href        string    `json:"href"`
-	ID          int       `json:"id"`
-	Name        string    `json:"name"`
+type UserBUnit struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
 }
 
 func (c *AuthenticatedClient) GetUser() (*User, error) {

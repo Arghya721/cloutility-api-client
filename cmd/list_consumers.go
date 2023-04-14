@@ -16,12 +16,12 @@ import (
 )
 
 // consumersCmd represents the consumers command
-var consumersCmd = &cobra.Command{
+var listConsumersCmd = &cobra.Command{
 	Use:   "consumers",
 	Short: "list consumers will list the available consumers / consumption-units",
 	Long: `
 The command 'list consumers' will list all the available consumers / consumption-units 
-for the current user account`,
+for the current user account if no business unit ID is provided`,
 	Run: func(cmd *cobra.Command, args []string) {
 		listConsumers()
 	},
@@ -45,16 +45,19 @@ func listConsumers() {
 	twriter.Init(os.Stdout, 8, 8, 1, '\t', 0)
 	defer twriter.Flush()
 
-	user, err := client.GetUser()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	if bunitId == 0 {
+		user, err := client.GetUser()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		bunitId = user.UserBUnit.ID
 	}
 
 	fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\n", "ID", "Name", "Creation date", "Url")
 	fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\n", "--", "----", "-------------", "---")
 
-	cUnits, err := client.GetConsumers(user.BusinessUnit.ID)
+	cUnits, err := client.GetConsumers(bunitId)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -65,5 +68,6 @@ func listConsumers() {
 }
 
 func init() {
-	listCmd.AddCommand(consumersCmd)
+	listCmd.AddCommand(listConsumersCmd)
+	listConsumersCmd.Flags().IntVar(&bunitId, "bunit-id", 0, "ID of business unit in which to list consumers")
 }
