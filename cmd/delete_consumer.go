@@ -54,14 +54,14 @@ func deleteConsumer() {
 	fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\n", "ID", "Name", "Status", "Url")
 	fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\n", "--", "----", "------", "---")
 
-	consumers, _ := client.GetConsumers(user.BusinessUnit.ID)
+	consumers, _ := client.GetConsumers(user.UserBUnit.ID)
 	for _, consumer := range consumers {
 		if consumer.ID == consumerID {
 			selectedConsumer = consumer
 		}
 	}
 
-	if err := client.DeleteConsumer(user.BusinessUnit.ID, consumerID); err != nil {
+	if err := client.DeleteConsumer(user.UserBUnit.ID, consumerID); err != nil {
 		fmt.Fprintf(twriter, "%v\t%s\t%s\t%s\n", consumerID, selectedConsumer.Name, err, selectedConsumer.Href)
 		os.Exit(1)
 	}
