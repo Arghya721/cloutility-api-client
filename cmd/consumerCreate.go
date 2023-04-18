@@ -1,14 +1,11 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"text/tabwriter"
 
-	"github.com/safespring/cloutility-api-client/cloutapi"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // nodeCmd represents the node command
@@ -26,19 +23,6 @@ node is also created that can be used for TSM backups.
 }
 
 func createConsumer() {
-	client, err := cloutapi.Init(
-		context.Background(),
-		viper.GetString("client_id"),
-		viper.GetString("client_origin"),
-		viper.GetString("username"),
-		viper.GetString("password"),
-		viper.GetString("url"),
-	)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
 	twriter := new(tabwriter.Writer)
 	twriter.Init(os.Stdout, 8, 8, 1, '\t', 0)
 	defer twriter.Flush()
