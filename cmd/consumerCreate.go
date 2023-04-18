@@ -14,23 +14,16 @@ import (
 // nodeCmd represents the node command
 var consumerCreateCmd = &cobra.Command{
 	Use:   "create",
-	Short: "Create new consumer and associated backup node",
+	Short: "Create new consumer and/or associated backup node",
 	Long: `
-The consumer create command creates a new consumer / consumtion-unit and an 
-associated backup node that you can be used for TSM backups.
+The consumer create command creates a new consumer / consumtion-unit. If additional
+information regarding OS, domain, contactperson etc is added an associated backup 
+node is also created that can be used for TSM backups.
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		createConsumer()
 	},
 }
-
-var (
-	name       string
-	contact    string
-	osType     int
-	clientType int
-	domain     int
-)
 
 func createConsumer() {
 	client, err := cloutapi.Init(
@@ -65,13 +58,13 @@ func createConsumer() {
 	consumer, err := client.CreateConsumer(bunitId, name)
 	if err != nil {
 		fmt.Fprintf(twriter, "%v\t%s\t%s\t%s\n", "N/A", name, err, "N/A")
-		os.Exit(1)
+		return
 	}
 
 	_, err = client.CreateNode(bunitId, consumer.ID, osType, clientType, domain, int(1), contact)
 	if err != nil {
 		fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\n", "N/A", name, err, "N/A")
-		os.Exit(1)
+		return
 	}
 
 	fmt.Fprintf(twriter, "%v\t%s\t%s\t%s\n", consumer.ID, consumer.Name, "CREATED", consumer.Href)

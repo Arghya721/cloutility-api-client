@@ -23,7 +23,16 @@ var rootCmd = &cobra.Command{
 Safespring BaaS 2.0 using the Cloutility REST API.`,
 }
 
-var cfgFile string
+// Global variables
+var (
+	name       string
+	contact    string
+	osType     int
+	clientType int
+	domain     int
+	cfgFile    string
+	consumerId int
+)
 
 func Execute() {
 	err := rootCmd.Execute()
@@ -38,7 +47,7 @@ func initConfig() {
 	} else {
 		viper.AddConfigPath(".")
 		viper.SetConfigName("cloutility-api-client")
-		viper.SetConfigType("properties")
+		// viper.SetConfigType("properties")
 	}
 	if err := viper.ReadInConfig(); err != nil {
 		fmt.Println("Can't read config:", err)
