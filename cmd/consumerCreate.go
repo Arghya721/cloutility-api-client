@@ -12,11 +12,11 @@ import (
 )
 
 // nodeCmd represents the node command
-var createConsumerCmd = &cobra.Command{
-	Use:   "consumer",
+var consumerCreateCmd = &cobra.Command{
+	Use:   "create",
 	Short: "Create new consumer and associated backup node",
 	Long: `
-The create consumer command creates a new consumer / consumtion-unit and an 
+The consumer create command creates a new consumer / consumtion-unit and an 
 associated backup node that you can be used for TSM backups.
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -78,18 +78,18 @@ func createConsumer() {
 }
 
 func init() {
-	createCmd.AddCommand(createConsumerCmd)
+	consumerCmd.AddCommand(consumerCreateCmd)
 
 	// Add flags
-	createConsumerCmd.Flags().StringVar(&name, "name", "", "Name of backup node (required)")
-	createConsumerCmd.Flags().StringVar(&contact, "contact", "Safespring", "Name of contact")
-	createConsumerCmd.Flags().IntVar(&osType, "os-type", 0, "ID of OS Type")
-	createConsumerCmd.Flags().IntVar(&clientType, "client-type", 0, "ID of client type")
-	createConsumerCmd.Flags().IntVar(&domain, "domain", 0, "ID of domain")
-	createConsumerCmd.Flags().IntVar(&bunitId, "bunit-id", 0, "ID of business unit in which to create consumer")
+	consumerCreateCmd.Flags().StringVar(&name, "name", "", "Name of backup node (required)")
+	consumerCreateCmd.Flags().StringVar(&contact, "contact", "Safespring", "Name of contact")
+	consumerCreateCmd.Flags().IntVar(&osType, "os-type", 0, "ID of OS Type")
+	consumerCreateCmd.Flags().IntVar(&clientType, "client-type", 0, "ID of client type")
+	consumerCreateCmd.Flags().IntVar(&domain, "domain", 0, "ID of domain")
+	consumerCreateCmd.Flags().IntVar(&bunitId, "bunit-id", 0, "ID of business unit in which to create consumer")
 
 	// Mark --name as required
-	err := createConsumerCmd.MarkFlagRequired("name")
+	err := consumerCreateCmd.MarkFlagRequired("name")
 	if err != nil {
 		fmt.Println("error marking name flag as required: %w", err)
 		os.Exit(1)

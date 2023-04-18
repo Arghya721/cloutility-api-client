@@ -16,18 +16,18 @@ import (
 )
 
 // consumersCmd represents the consumers command
-var listConsumersCmd = &cobra.Command{
-	Use:   "consumers",
-	Short: "list consumers will list the available consumers / consumption-units",
+var consumerListCmd = &cobra.Command{
+	Use:   "list",
+	Short: "consumer list will list the available consumers / consumption-units",
 	Long: `
-The command 'list consumers' will list all the available consumers / consumption-units 
+The command 'consumer list' will list all the available consumers / consumption-units 
 for the current user account if no business unit ID is provided`,
 	Run: func(cmd *cobra.Command, args []string) {
-		listConsumers()
+		consumerList()
 	},
 }
 
-func listConsumers() {
+func consumerList() {
 	client, err := cloutapi.Init(
 		context.Background(),
 		viper.GetString("client_id"),
@@ -68,6 +68,6 @@ func listConsumers() {
 }
 
 func init() {
-	listCmd.AddCommand(listConsumersCmd)
-	listConsumersCmd.Flags().IntVar(&bunitId, "bunit-id", 0, "ID of business unit in which to list consumers")
+	consumerCmd.AddCommand(consumerListCmd)
+	consumerListCmd.Flags().IntVar(&bunitId, "bunit-id", 0, "ID of business unit in which to list consumers")
 }

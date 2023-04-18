@@ -14,19 +14,19 @@ import (
 	"github.com/spf13/viper"
 )
 
-var listOSTypesCmd = &cobra.Command{
-	Use:   "os-types",
-	Short: "list ostypes will list the available OS types when enrolling a new backup node",
+var osTypeListCmd = &cobra.Command{
+	Use:   "list",
+	Short: "ostype list will list the available OS types when enrolling a new backup node",
 	Long: `
 The command will list all the available Operating System types supported by the 
 backup server.	
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		listOSTypes()
+		osTypeList()
 	},
 }
 
-func listOSTypes() {
+func osTypeList() {
 	client, err := cloutapi.Init(
 		context.Background(),
 		viper.GetString("client_id"),
@@ -58,5 +58,5 @@ func listOSTypes() {
 }
 
 func init() {
-	listCmd.AddCommand(listOSTypesCmd)
+	osTypeCmd.AddCommand(osTypeListCmd)
 }
