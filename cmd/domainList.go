@@ -15,19 +15,19 @@ import (
 )
 
 // listDomainsCmd represents the listDomains command
-var listDomainsCmd = &cobra.Command{
-	Use:   "domains",
-	Short: "list domains will list the available backup domains",
+var domainListCmd = &cobra.Command{
+	Use:   "list",
+	Short: "domain list will list the available backup domains",
 	Long: `
-The list domains command will list all available backup domains supported by
+The domain list command will list all available backup domains supported by
 the server.
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		listDomains()
+		domainList()
 	},
 }
 
-func listDomains() {
+func domainList() {
 	client, err := cloutapi.Init(
 		context.Background(),
 		viper.GetString("client_id"),
@@ -65,5 +65,5 @@ func listDomains() {
 }
 
 func init() {
-	listCmd.AddCommand(listDomainsCmd)
+	domainCmd.AddCommand(domainListCmd)
 }

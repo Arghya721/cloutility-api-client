@@ -12,21 +12,21 @@ import (
 )
 
 // nodeCmd represents the node command
-var deleteConsumerCmd = &cobra.Command{
-	Use:   "consumer",
+var consumerDeleteCmd = &cobra.Command{
+	Use:   "delete",
 	Short: "Delete existing consumer and associated backup node",
 	Long: `
-The command delete consumer deletes an existing consumer and associated 
+The consumer delete command deletes an existing consumer and associated 
 backup node.
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		deleteConsumer()
+		consumerDelete()
 	},
 }
 
 var consumerID int
 
-func deleteConsumer() {
+func consumerDelete() {
 	var selectedConsumer cloutapi.Consumer
 	client, err := cloutapi.Init(
 		context.Background(),
@@ -77,13 +77,13 @@ func deleteConsumer() {
 }
 
 func init() {
-	deleteCmd.AddCommand(deleteConsumerCmd)
+	consumerCmd.AddCommand(consumerDeleteCmd)
 
-	deleteConsumerCmd.Flags().IntVar(&consumerID, "id", 0, "ID of consumption-unit to delete")
-	deleteConsumerCmd.Flags().IntVar(&bunitId, "bunit-id", 0, "ID of business-unit in which the consumption-unit resides")
+	consumerDeleteCmd.Flags().IntVar(&consumerID, "id", 0, "ID of consumption-unit to delete")
+	consumerDeleteCmd.Flags().IntVar(&bunitId, "bunit-id", 0, "ID of business-unit in which the consumption-unit resides")
 
 	// Mark --id as required
-	err := deleteConsumerCmd.MarkFlagRequired("id")
+	err := consumerDeleteCmd.MarkFlagRequired("id")
 	if err != nil {
 		fmt.Println("error marking id flag as required: %w", err)
 		os.Exit(1)

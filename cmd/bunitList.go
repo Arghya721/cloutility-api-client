@@ -14,21 +14,21 @@ import (
 	"github.com/spf13/viper"
 )
 
-var listBUnitsCmd = &cobra.Command{
-	Use:   "bunits",
-	Short: "list bunits will list the available business units",
+var bunitListCmd = &cobra.Command{
+	Use:   "list",
+	Short: "bunit list will list the available business units",
 	Long: `
 The command will list all the available business-units and decendant business-units
 which your user account has access to.	
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		listBUnits()
+		bunitList()
 	},
 }
 
 var bunitId int
 
-func listBUnits() {
+func bunitList() {
 	client, err := cloutapi.Init(
 		context.Background(),
 		viper.GetString("client_id"),
@@ -71,6 +71,6 @@ func listBUnits() {
 }
 
 func init() {
-	listCmd.AddCommand(listBUnitsCmd)
-	listBUnitsCmd.Flags().IntVar(&bunitId, "bunit-id", 0, "ID of business unit to list")
+	bunitCmd.AddCommand(bunitListCmd)
+	bunitListCmd.Flags().IntVar(&bunitId, "bunit-id", 0, "ID of business unit to list")
 }
