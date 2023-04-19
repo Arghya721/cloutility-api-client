@@ -121,7 +121,7 @@ func (c *AuthenticatedClient) apiRequest(endpoint string, method string, payload
 		if err := json.Unmarshal([]byte(message), &reqErr); err != nil {
 			return "", fmt.Errorf("error response %v", resp.StatusCode)
 		}
-		return "", fmt.Errorf("error message: %s", reqErr.DeveloperMessage)
+		return "", fmt.Errorf("%s", reqErr.DeveloperMessage)
 	}
 
 	body, err := io.ReadAll(resp.Body)
