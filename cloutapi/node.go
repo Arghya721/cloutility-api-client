@@ -13,30 +13,32 @@ type Node struct {
 	Href string `json:"href"`
 }
 
+type NodeData struct {
+	OperatingSystem NodeOperatingSystem
+	Type            NodeType
+	Domain          Domain
+	ClientOptionSet ClientOptionSet
+	Contact         string
+	CpuCount        int
+}
+
 func (c *AuthenticatedClient) CreateNode(bUnitID, consumerID, osType, clientType, domain, clientOptionSet int, contact string) (Node, error) {
-	var newNode Node
+	var (
+		newNode  Node
+		nodedata NodeData
+	)
 
 	endpoint := c.BaseURL + "/v1/bunits/" + strconv.Itoa(bUnitID) + "/consumers/" + strconv.Itoa(consumerID) + "/node"
 
-	// TODO: Parameterize
-	data := map[string]interface{}{
-		"OperatingSystem": map[string]int{
-			"ID": osType,
-		},
-		"Type": map[string]int{
-			"ID": clientType,
-		},
-		"Domain": map[string]int{
-			"ID": domain,
-		},
-		"ClientOptionSet": map[string]int{
-			"ID": clientOptionSet,
-		},
-		"contact":  contact,
-		"CpuCount": 1,
-	}
+	// Assign data
+	nodedata.Contact = contact
+	nodedata.Domain.ID = domain
+	nodedata.OperatingSystem.ID = osType
+	nodedata.Type.ID = clientType
+	nodedata.CpuCount = 1
+	nodedata.ClientOptionSet.ID = clientOptionSet
 
-	payload, err := json.Marshal(data)
+	payload, err := json.Marshal(nodedata)
 	if err != nil {
 		return Node{}, fmt.Errorf("failed to encode json payload: %s", err)
 	}
