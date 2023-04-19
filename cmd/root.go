@@ -28,14 +28,15 @@ Safespring BaaS 2.0 using the Cloutility REST API.`,
 
 // Global variables
 var (
-	name       string
-	contact    string
-	osType     int
-	clientType int
-	domain     int
-	cfgFile    string
-	consumerId int
-	client     *cloutapi.AuthenticatedClient
+	name            string
+	contact         string
+	osType          int
+	clientType      int
+	domain          int
+	cfgFile         string
+	consumerId      int
+	clientOptionSet int
+	client          *cloutapi.AuthenticatedClient
 )
 
 func Execute() {
