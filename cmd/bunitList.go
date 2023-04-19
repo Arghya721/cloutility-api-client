@@ -23,8 +23,6 @@ which your user account has access to.
 	},
 }
 
-var bunitId int
-
 func bunitList() {
 	twriter := new(tabwriter.Writer)
 	twriter.Init(os.Stdout, 8, 8, 1, '\t', 0)

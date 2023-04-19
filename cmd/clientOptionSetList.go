@@ -53,5 +53,5 @@ func clientOptionSetList() {
 func init() {
 	clientOptionSetCmd.AddCommand(clientOptionSetListCmd)
 
-	clientOptionSetCmd.Flags().IntVar(&bunitId, "bunit-id", 0, "ID of business unit in which to search for ClientOptionSets")
+	clientOptionSetListCmd.Flags().IntVar(&bunitId, "bunit-id", 0, "ID of business unit in which to search for ClientOptionSets")
 }
