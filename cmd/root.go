@@ -37,6 +37,7 @@ var (
 	consumerId      int
 	clientOptionSet int
 	client          *cloutapi.AuthenticatedClient
+	activate        bool
 )
 
 func Execute() {
