@@ -45,7 +45,7 @@ func createConsumer() {
 		return
 	}
 
-	_, err = client.CreateNode(bunitId, consumer.ID, osType, clientType, domain, int(1), contact)
+	_, err = client.CreateNode(bunitId, consumer.ID, osType, clientType, domain, int(2), contact)
 	if err != nil {
 		fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\n", "N/A", name, err, "N/A")
 		return
@@ -62,6 +62,7 @@ func init() {
 	consumerCreateCmd.Flags().StringVar(&contact, "contact", "Safespring", "Name of contact")
 	consumerCreateCmd.Flags().IntVar(&osType, "os-type", 0, "ID of OS Type")
 	consumerCreateCmd.Flags().IntVar(&clientType, "client-type", 0, "ID of client type")
+	consumerCreateCmd.Flags().IntVar(&clientOptionSet, "clientOptionSet", 0, "ID of ClientOptionSet")
 	consumerCreateCmd.Flags().IntVar(&domain, "domain", 0, "ID of domain")
 	consumerCreateCmd.Flags().IntVar(&bunitId, "bunit-id", 0, "ID of business unit in which to create consumer")
 
