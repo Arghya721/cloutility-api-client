@@ -36,22 +36,31 @@ func createConsumer() {
 		bunitId = user.UserBUnit.ID
 	}
 
-	fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\n", "ID", "Name", "Status", "Url")
-	fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\n", "--", "----", "------", "---")
+	fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\t%s\t%s\n", "ID", "Name", "Status", "SP Username", "SP Password", "Url")
+	fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\t%s\t%s\n", "--", "----", "------", "-----------", "-----------", "---")
 
 	consumer, err := client.CreateConsumer(bunitId, name)
 	if err != nil {
-		fmt.Fprintf(twriter, "%v\t%s\t%s\t%s\n", "N/A", name, err, "N/A")
+		fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\t%s\t%s\n", "N/A", name, err, "N/A", "N/A", "N/A")
 		return
 	}
 
 	_, err = client.CreateNode(bunitId, consumer.ID, osType, clientType, domain, int(2), contact)
 	if err != nil {
-		fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\n", "N/A", name, err, "N/A")
+		fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\t%s\t%s\n", "N/A", name, err, "N/A", "N/A", "N/A")
 		return
 	}
 
-	fmt.Fprintf(twriter, "%v\t%s\t%s\t%s\n", consumer.ID, consumer.Name, "CREATED", consumer.Href)
+	if activate {
+		node, err := client.ActivateNode(bunitId, consumer.ID)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		fmt.Fprintf(twriter, "%v\t%s\t%s\t%s\t%s\t%s\n", consumer.ID, consumer.Name, "ACTIVATED", node.TsmName, node.TsmPassword, consumer.Href)
+	} else {
+		fmt.Fprintf(twriter, "%v\t%s\t%s\t%s\t%s\t%s\n", consumer.ID, consumer.Name, "CREATED", "********", "*********", consumer.Href)
+	}
 }
 
 func init() {
@@ -65,6 +74,7 @@ func init() {
 	consumerCreateCmd.Flags().IntVar(&clientOptionSet, "clientOptionSet", 0, "ID of ClientOptionSet")
 	consumerCreateCmd.Flags().IntVar(&domain, "domain", 0, "ID of domain")
 	consumerCreateCmd.Flags().IntVar(&bunitId, "bunit-id", 0, "ID of business unit in which to create consumer")
+	consumerCreateCmd.Flags().BoolVar(&activate, "activate", false, "If used the backup-node created will be activated and NODENAME and PASSWORD will be output")
 
 	// Mark --name as required
 	err := consumerCreateCmd.MarkFlagRequired("name")
