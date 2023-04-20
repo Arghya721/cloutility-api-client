@@ -48,7 +48,7 @@ func bunitList() {
 	fmt.Fprintf(twriter, "%v\t%s\t%s\t%s\n", bunit.ID, bunit.Name, "Parent", bunit.GroupName)
 
 	for _, subUnit := range bunit.BusinessUnits {
-		fmt.Fprintf(twriter, "%v\t%s\t%s\t%s\n", subUnit.ID, subUnit.Name, "Decendant", subUnit.GroupName)
+		fmt.Fprintf(twriter, "%v\t%s\t%s\t%s\n", subUnit.ID, subUnit.Name, "Descendant", subUnit.GroupName)
 	}
 }
 
