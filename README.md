@@ -73,4 +73,4 @@ Contributions to the Cloutility API Client project are welcome. To contribute, p
 
 ## License
 
-Cloutility API Client is released under the to-be-decided License. See `LICENSE` for more information.
+Cloutility API Client is released under the BSD License. See `LICENSE` for more information.
