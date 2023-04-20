@@ -1,8 +1,9 @@
-module github.com/safespring/cloutility-api-client
+module github.com/safespring-community/cloutility-api-client
 
 go 1.20
 
 require (
+	github.com/safespring/cloutility-api-client v0.0.0-20230420135845-0c77b21e6158
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.15.0
 )

@@ -17,7 +17,7 @@ go get github.com/safespring/cloutility-api-client
 To use the Cloutility API Client library in your GoLang project, you can import the library using:
 
 ```go
-go get "github.com/safespring/cloutility-api-client"
+go get "github.com/safespring-community/cloutility-api-client"
 ```
 
 To query the API you need an authenticated client which is instansiated using:
