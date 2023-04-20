@@ -11,9 +11,9 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Setup Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v4
         with:
           go-version: 1.20
       - name: Build
@@ -22,45 +22,11 @@ jobs:
           GOOS=linux GOARCH=amd64 go build -o bin/cloutility-api-client-linux-amd64 .
           GOOS=darwin GOARCH=amd64 go build -o bin/cloutility-api-client-darwin-amd64 .
           GOOS=windows GOARCH=amd64 go build -o bin/cloutility-api-client-windows-amd64.exe .
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          body: |
-            This is the ${{ github.ref }} release of cloutility-api-client.
-          draft: false
-          prerelease: false
-      - name: Upload Release (Linux binary)
-        id: upload-release-asset-linux
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./bin/cloutility-api-client-linux-amd64
-          asset_name: cloutility-api-client-linux-amd64
-          asset_content_type: application/octet-stream
-      - name: Upload Release (MacOS binary)
-        id: upload-release-asset-macos
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./bin/cloutility-api-client-darwin-amd64
-          asset_name: cloutility-api-client-darwin-amd64
-          asset_content_type: application/octet-stream
-      - name: Upload Release (Windows binary)
-        id: upload-release-asset-windows
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./bin/cloutility-api-client-windows-amd64.exe
-          asset_name: cloutility-api-client-windows-amd64.exe
-          asset_content_type: application/octet-stream
+          files: |
+            bin/cloutility-api-client-linux-amd64
+            bin/cloutility-api-client-darwin-amd64
+            bin/cloutility-api-client-windows-amd64.exe
