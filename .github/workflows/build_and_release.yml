@@ -1,8 +1,7 @@
 name: Build and Release
 on:
-  push:
-    tags:
-      - 'v*'
+  release:
+    types: [created]
 jobs:
   release:
     name: Release cloutility-api-client
@@ -14,12 +13,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Create Release
-        uses: elgohr/Github-Release-Action@v4
-        env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-        with:
-          title: ${{ GITHUB.REF_NAME }}
       - name: Release binarys
         uses: wangyoucao577/go-release-action@v1
         with:
