@@ -34,8 +34,8 @@ jobs:
             This is the ${{ github.ref }} release of cloutility-api-client.
           draft: false
           prerelease: false
-      - name: Upload Release Asset
-        id: upload-release-asset
+      - name: Upload Release (Linux binary)
+        id: upload-release-asset-linux
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -44,8 +44,8 @@ jobs:
           asset_path: ./bin/cloutility-api-client-linux-amd64
           asset_name: cloutility-api-client-linux-amd64
           asset_content_type: application/octet-stream
-      - name: Upload Release Asset
-        id: upload-release-asset
+      - name: Upload Release (MacOS binary)
+        id: upload-release-asset-macos
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -54,8 +54,8 @@ jobs:
           asset_path: ./bin/cloutility-api-client-darwin-amd64
           asset_name: cloutility-api-client-darwin-amd64
           asset_content_type: application/octet-stream
-      - name: Upload Release Asset
-        id: upload-release-asset
+      - name: Upload Release (Windows binary)
+        id: upload-release-asset-windows
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
