@@ -8,35 +8,39 @@ import (
 )
 
 type Node struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
-	Href string `json:"href"`
+	ID          int    `json:"id"`
+	Name        string `json:"name"`
+	Href        string `json:"href"`
+	TsmName     string `json:"tsmName"`
+	TsmPassword string `json:"tsmPassword"`
+}
+
+type NodeData struct {
+	OperatingSystem NodeOperatingSystem
+	Type            NodeType
+	Domain          Domain
+	ClientOptionSet ClientOptionSet
+	Contact         string
+	CpuCount        int
 }
 
 func (c *AuthenticatedClient) CreateNode(bUnitID, consumerID, osType, clientType, domain, clientOptionSet int, contact string) (Node, error) {
-	var newNode Node
+	var (
+		newNode  Node
+		nodedata NodeData
+	)
 
 	endpoint := c.BaseURL + "/v1/bunits/" + strconv.Itoa(bUnitID) + "/consumers/" + strconv.Itoa(consumerID) + "/node"
 
-	// TODO: Parameterize
-	data := map[string]interface{}{
-		"OperatingSystem": map[string]int{
-			"ID": osType,
-		},
-		"Type": map[string]int{
-			"ID": clientType,
-		},
-		"Domain": map[string]int{
-			"ID": domain,
-		},
-		"ClientOptionSet": map[string]int{
-			"ID": clientOptionSet,
-		},
-		"contact":  contact,
-		"CpuCount": 1,
-	}
+	// Assign data
+	nodedata.Contact = contact
+	nodedata.Domain.ID = domain
+	nodedata.OperatingSystem.ID = osType
+	nodedata.Type.ID = clientType
+	nodedata.CpuCount = 1
+	nodedata.ClientOptionSet.ID = clientOptionSet
 
-	payload, err := json.Marshal(data)
+	payload, err := json.Marshal(nodedata)
 	if err != nil {
 		return Node{}, fmt.Errorf("failed to encode json payload: %s", err)
 	}
@@ -53,10 +57,10 @@ func (c *AuthenticatedClient) CreateNode(bUnitID, consumerID, osType, clientType
 	return newNode, nil
 }
 
-func (c *AuthenticatedClient) DeleteNode(id int) (Node, error) {
+func (c *AuthenticatedClient) DeleteNode(bUnitID, consumerID int) (Node, error) {
 	var node Node
 
-	endpoint := c.BaseURL + "/v1/bunits/17/consumers/" + strconv.Itoa(id) + "/node?deleteAssociations=True"
+	endpoint := c.BaseURL + "/v1/bunits/" + strconv.Itoa(bUnitID) + "/consumers/" + strconv.Itoa(consumerID) + "/node?deleteAssociations=True"
 	fmt.Println(endpoint)
 
 	resp, err := c.apiRequest(endpoint, http.MethodDelete, nil)
@@ -69,10 +73,10 @@ func (c *AuthenticatedClient) DeleteNode(id int) (Node, error) {
 	return node, nil
 }
 
-func (c *AuthenticatedClient) GetNode(userID, consumerID int) (Node, error) {
+func (c *AuthenticatedClient) GetNode(bUnitID, consumerID int) (Node, error) {
 	var node Node
 
-	endpoint := c.BaseURL + "/v1/bunits/" + strconv.Itoa(userID) + "/consumers/" + strconv.Itoa(consumerID) + "/node"
+	endpoint := c.BaseURL + "/v1/bunits/" + strconv.Itoa(bUnitID) + "/consumers/" + strconv.Itoa(consumerID) + "/node"
 
 	resp, err := c.apiRequest(endpoint, http.MethodGet, nil)
 	if err != nil {
@@ -81,5 +85,31 @@ func (c *AuthenticatedClient) GetNode(userID, consumerID int) (Node, error) {
 	if err := json.Unmarshal([]byte(resp), &node); err != nil {
 		return Node{}, fmt.Errorf("failed to decode nodedata: %s", err)
 	}
+	return node, nil
+}
+
+func (c *AuthenticatedClient) ActivateNode(bUnitID, consumerID int) (Node, error) {
+	var (
+		node Node
+		err  error
+	)
+
+	endpoint := c.BaseURL + "/v1/bunits/" + strconv.Itoa(bUnitID) + "/consumers/" + strconv.Itoa(consumerID) + "/node/spname"
+	node.TsmName, err = c.apiRequest(endpoint, http.MethodGet, nil)
+	if err != nil {
+		return Node{}, fmt.Errorf("error retrieving nodename: %s", err)
+	}
+
+	endpoint = c.BaseURL + "/v1/bunits/" + strconv.Itoa(bUnitID) + "/consumers/" + strconv.Itoa(consumerID) + "/node/activate?tsmName=" + node.TsmName
+	_, err = c.apiRequest(endpoint, http.MethodGet, nil)
+	if err != nil {
+		return Node{}, fmt.Errorf("error activating node: %s", err)
+	}
+
+	node, err = c.GetNode(bUnitID, consumerID)
+	if err != nil {
+		return Node{}, fmt.Errorf("error retrieving node: %s", err)
+	}
+
 	return node, nil
 }

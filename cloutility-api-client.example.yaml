@@ -1,0 +1,7 @@
+---
+url: "https://portal-api.backup.sto2.safedc.net"
+client_id: "api key from safespring backup portal"
+username: "username"
+password: "password"
+client_name: "safespring-cli-client"
+client_origin: https://www.safespring.com

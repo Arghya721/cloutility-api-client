@@ -1,14 +1,12 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"text/tabwriter"
 
 	"github.com/safespring/cloutility-api-client/cloutapi"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // nodeCmd represents the node command
@@ -24,22 +22,8 @@ backup node.
 	},
 }
 
-var consumerID int
-
 func consumerDelete() {
 	var selectedConsumer cloutapi.Consumer
-	client, err := cloutapi.Init(
-		context.Background(),
-		viper.GetString("client_id"),
-		viper.GetString("client_origin"),
-		viper.GetString("username"),
-		viper.GetString("password"),
-		viper.GetString("url"),
-	)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
 
 	twriter := new(tabwriter.Writer)
 	twriter.Init(os.Stdout, 8, 8, 1, '\t', 0)
@@ -59,27 +43,27 @@ func consumerDelete() {
 
 	consumers, _ := client.GetConsumers(bunitId)
 	for _, consumer := range consumers {
-		if consumer.ID == consumerID {
+		if consumer.ID == consumerId {
 			selectedConsumer = consumer
 		}
 	}
 
 	if selectedConsumer.ID == 0 {
-		fmt.Fprintf(twriter, "%v\tUser Default: %v\t%s\t%s\t%s\n", consumerID, bunitId, "NOT FOUND", "NOT FOUND", "NOT FOUND")
+		fmt.Fprintf(twriter, "%v\tUser Default: %v\t%s\t%s\t%s\n", consumerId, bunitId, "NOT FOUND", "NOT FOUND", "NOT FOUND")
 		return
 	}
 
-	if err := client.DeleteConsumer(bunitId, consumerID); err != nil {
-		fmt.Fprintf(twriter, "%v\t%v\t%s\t%s\t%s\n", consumerID, bunitId, selectedConsumer.Name, err, selectedConsumer.Href)
+	if err := client.DeleteConsumer(bunitId, consumerId); err != nil {
+		fmt.Fprintf(twriter, "%v\t%v\t%s\t%s\t%s\n", consumerId, bunitId, selectedConsumer.Name, err, selectedConsumer.Href)
 		return
 	}
-	fmt.Fprintf(twriter, "%v\t%v\t%s\t%s\t%s\n", consumerID, bunitId, selectedConsumer.Name, "DELETED", selectedConsumer.Href)
+	fmt.Fprintf(twriter, "%v\t%v\t%s\t%s\t%s\n", consumerId, bunitId, selectedConsumer.Name, "DELETED", selectedConsumer.Href)
 }
 
 func init() {
 	consumerCmd.AddCommand(consumerDeleteCmd)
 
-	consumerDeleteCmd.Flags().IntVar(&consumerID, "id", 0, "ID of consumption-unit to delete")
+	consumerDeleteCmd.Flags().IntVar(&consumerId, "id", 0, "ID of consumption-unit to delete")
 	consumerDeleteCmd.Flags().IntVar(&bunitId, "bunit-id", 0, "ID of business-unit in which the consumption-unit resides")
 
 	// Mark --id as required

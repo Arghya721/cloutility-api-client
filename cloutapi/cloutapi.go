@@ -28,6 +28,13 @@ type AuthenticatedClient struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
+type ErrorResponse struct {
+	Status           int    `json:"status"`
+	Code             string `json:"code"`
+	Message          string `json:"message"`
+	DeveloperMessage string `json:"developerMessage"`
+}
+
 // Initialize client and return an AuthenticatedClient
 func Init(ctx context.Context, client_id, origin, username, password, baseURL string) (*AuthenticatedClient, error) {
 	var c AuthenticatedClient
@@ -109,7 +116,12 @@ func (c *AuthenticatedClient) apiRequest(endpoint string, method string, payload
 	// Check response code and return error if not 2xx
 	statusOK := resp.StatusCode >= 200 && resp.StatusCode < 300
 	if !statusOK {
-		return "", fmt.Errorf("error response %v", resp.StatusCode)
+		var reqErr ErrorResponse
+		message, _ := io.ReadAll(resp.Body)
+		if err := json.Unmarshal([]byte(message), &reqErr); err != nil {
+			return "", fmt.Errorf("error response %v", resp.StatusCode)
+		}
+		return "", fmt.Errorf("%s", reqErr.DeveloperMessage)
 	}
 
 	body, err := io.ReadAll(resp.Body)

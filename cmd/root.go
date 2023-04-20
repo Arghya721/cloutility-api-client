@@ -9,9 +9,12 @@ Copyright 2022-2023 (C) Blue Safespring AB
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"os"
 
+	"github.com/safespring/cloutility-api-client/cloutapi"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -23,7 +26,20 @@ var rootCmd = &cobra.Command{
 Safespring BaaS 2.0 using the Cloutility REST API.`,
 }
 
-var cfgFile string
+// Global variables
+var (
+	activate        bool
+	bunitId         int
+	cfgFile         string
+	client          *cloutapi.AuthenticatedClient
+	clientOptionSet int
+	clientType      int
+	consumerId      int
+	contact         string
+	domain          int
+	name            string
+	osType          int
+)
 
 func Execute() {
 	err := rootCmd.Execute()
@@ -32,13 +48,28 @@ func Execute() {
 	}
 }
 
+func initCloutilityApi() {
+	c, err := cloutapi.Init(
+		context.Background(),
+		viper.GetString("client_id"),
+		viper.GetString("client_origin"),
+		viper.GetString("username"),
+		viper.GetString("password"),
+		viper.GetString("url"),
+	)
+	if err != nil {
+		log.Fatalf("error initializing client: %s", err)
+		os.Exit(1)
+	}
+	client = c
+}
+
 func initConfig() {
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
 	} else {
 		viper.AddConfigPath(".")
 		viper.SetConfigName("cloutility-api-client")
-		viper.SetConfigType("properties")
 	}
 	if err := viper.ReadInConfig(); err != nil {
 		fmt.Println("Can't read config:", err)
@@ -47,7 +78,7 @@ func initConfig() {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig)
+	cobra.OnInitialize(initConfig, initCloutilityApi)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is ./cloutility-api-client.properties)")
 	// rootCmd.PersistentFlags().Bool("debug", false, "print debug information")
 	// rootCmd.PersistentFlags().Bool("dry-run", false, "do not actually create anything")
