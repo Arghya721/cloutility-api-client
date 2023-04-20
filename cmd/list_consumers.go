@@ -17,27 +17,43 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"text/tabwriter"
+	"time"
 
+	"github.com/safespring/cloutility-api-client/cloutapi"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
-// listDomainsCmd represents the listDomains command
-var domainListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "domain list will list the available backup domains",
+// consumersCmd represents the consumers command
+var consumersCmd = &cobra.Command{
+	Use:   "consumers",
+	Short: "list consumers will list the available consumers / consumption-units",
 	Long: `
-The domain list command will list all available backup domains supported by
-the server.
-	`,
+The command 'list consumers' will list all the available consumers / consumption-units 
+for the current user account`,
 	Run: func(cmd *cobra.Command, args []string) {
-		domainList()
+		listConsumers()
 	},
 }
 
-func domainList() {
+func listConsumers() {
+	client, err := cloutapi.Init(
+		context.Background(),
+		viper.GetString("client_id"),
+		viper.GetString("client_origin"),
+		viper.GetString("username"),
+		viper.GetString("password"),
+		viper.GetString("url"),
+	)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
 	twriter := new(tabwriter.Writer)
 	twriter.Init(os.Stdout, 8, 8, 1, '\t', 0)
 	defer twriter.Flush()
@@ -48,19 +64,19 @@ func domainList() {
 		os.Exit(1)
 	}
 
-	fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\n", "ID", "Name", "Description", "Url")
-	fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\n", "--", "----", "-----------", "---")
+	fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\n", "ID", "Name", "Creation date", "Url")
+	fmt.Fprintf(twriter, "%s\t%s\t%s\t%s\n", "--", "----", "-------------", "---")
 
-	domains, err := client.GetDomains(user.UserBUnit.ID)
+	cUnits, err := client.GetConsumers(user.BusinessUnit.ID)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	for _, domain := range domains {
-		fmt.Fprintf(twriter, "%v\t%s\t%s\t%s\n", domain.ID, domain.Name, domain.Description, domain.Href)
+	for _, cUnit := range cUnits {
+		fmt.Fprintf(twriter, "%v\t%s\t%s\t%s\n", cUnit.ID, cUnit.Name, cUnit.CreatedDate.Format(time.ANSIC), cUnit.Href)
 	}
 }
 
 func init() {
-	domainCmd.AddCommand(domainListCmd)
+	listCmd.AddCommand(consumersCmd)
 }

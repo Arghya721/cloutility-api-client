@@ -14,10 +14,22 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package main
+*/
+package cmd
 
-import "github.com/safespring/cloutility-api-client/cmd"
+import (
+	"github.com/spf13/cobra"
+)
 
-func main() {
-	cmd.Execute()
+// listCmd represents the list command
+var listCmd = &cobra.Command{
+	Use:   "list",
+	Short: "list subcommand",
+	Long: `
+The list subcommand is used for listing various resources available on the backup server.
+	`,
+}
+
+func init() {
+	rootCmd.AddCommand(listCmd)
 }
