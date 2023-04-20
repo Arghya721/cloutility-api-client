@@ -18,6 +18,8 @@ jobs:
         uses: elgohr/Github-Release-Action@v4
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        with:
+          title: ${{ GITHUB_REF_NAME }}
       - name: Release binarys
         uses: wangyoucao577/go-release-action@v1
         with:
