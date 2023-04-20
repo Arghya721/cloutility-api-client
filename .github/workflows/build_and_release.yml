@@ -19,7 +19,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         with:
-          title: ${{ GITHUB_REF_NAME }}
+          title: ${{ GITHUB.REF_NAME }}
       - name: Release binarys
         uses: wangyoucao577/go-release-action@v1
         with:
