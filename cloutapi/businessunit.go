@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 )
 
@@ -32,7 +33,20 @@ func (c *AuthenticatedClient) DeleteBusinessUnit() error {
 func (c *AuthenticatedClient) GetBusinessUnit(bunitID int) (BusinessUnit, error) {
 	var bunit BusinessUnit
 
-	endpoint := c.BaseURL + "/v1/bunits?bunitId=" + strconv.Itoa(bunitID)
+	// validate the base url to create the endpoint
+	path := "/v1/bunits"
+	baseURL, err := url.Parse(c.BaseURL)
+	if err != nil {
+		return BusinessUnit{}, fmt.Errorf("error parsing base URL: %s", err)
+	}
+
+	query := url.Values{}
+	query.Set("bunitId", strconv.Itoa(bunitID))
+
+	// Append the query parameters to the URL
+	baseURL.Path = path
+	baseURL.RawQuery = query.Encode()
+	endpoint := baseURL.String()
 
 	resp, err := c.apiRequest(endpoint, http.MethodGet, nil)
 	if err != nil {

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -29,7 +30,16 @@ func (c *AuthenticatedClient) GetNodeType() ([]NodeType, error) {
 		nodes []NodeType
 	)
 
-	endpoint := c.BaseURL + "/v1/nodetypes"
+	// validate the base url to create the endpoint
+	path := "/v1/nodetypes"
+	baseURL, err := url.Parse(c.BaseURL)
+
+	if err != nil {
+		return nil, fmt.Errorf("error parsing base url: %s", err)
+	}
+
+	baseURL.Path = path
+	endpoint := baseURL.String()
 
 	resp, err := c.apiRequest(endpoint, http.MethodGet, nil)
 	if err != nil {

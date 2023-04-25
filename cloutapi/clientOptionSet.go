@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 )
@@ -29,7 +30,16 @@ func (c *AuthenticatedClient) GetClientOptionSet(bUnitID int) ([]ClientOptionSet
 		sets []ClientOptionSet
 	)
 
-	endpoint := c.BaseURL + "/v1/bunits/" + strconv.Itoa(bUnitID) + "/defaultserver/clientoptionsets"
+	// validate the base url to create the endpoint
+	path := "/v1/bunits" + strconv.Itoa(bUnitID) + "/defaultserver/clientoptionsets"
+	baseURL, err := url.Parse(c.BaseURL)
+
+	if err != nil {
+		return nil, fmt.Errorf("error parsing base url: %s", err)
+	}
+
+	baseURL.Path = path
+	endpoint := baseURL.String()
 
 	resp, err := c.apiRequest(endpoint, http.MethodGet, nil)
 	if err != nil {

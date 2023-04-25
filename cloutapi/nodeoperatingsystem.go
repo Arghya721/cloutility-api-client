@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -37,7 +38,16 @@ func (c *AuthenticatedClient) GetNodeOperatingSystem() ([]NodeOperatingSystem, e
 		nodeOSes []NodeOperatingSystem
 	)
 
-	endpoint := c.BaseURL + "/v1/nodeoperatingsystems"
+	// validate the base url to create the endpoint
+	path := "/v1/nodeoperatingsystems"
+	baseURL, err := url.Parse(c.BaseURL)
+
+	if err != nil {
+		return nil, fmt.Errorf("error parsing base url: %s", err)
+	}
+
+	baseURL.Path = path
+	endpoint := baseURL.String()
 
 	resp, err := c.apiRequest(endpoint, http.MethodGet, nil)
 	if err != nil {
