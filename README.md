@@ -7,7 +7,7 @@ Cloutility API Client is a GoLang project aimed at providing a client library fo
 To install Cloutility API Client, you can use the `go get` command:
 
 ```
-go get github.com/safespring/cloutility-api-client
+go get github.com/safespring-community/cloutility-api-client
 ```
 
 ## Usage
