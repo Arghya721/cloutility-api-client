@@ -16,7 +16,7 @@
 
 package main
 
-import "github.com/safespring/cloutility-api-client/cmd"
+import "github.com/safespring-community/cloutility-api-client/cmd"
 
 func main() {
 	cmd.Execute()
