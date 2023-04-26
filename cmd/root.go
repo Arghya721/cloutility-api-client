@@ -22,7 +22,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/safespring/cloutility-api-client/cloutapi"
+	"github.com/safespring-community/cloutility-api-client/cloutapi"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
