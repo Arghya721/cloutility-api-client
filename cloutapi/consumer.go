@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 )
@@ -29,7 +30,17 @@ func (c *AuthenticatedClient) CreateConsumer(bUnitID int, nodename string) (Cons
 		consumer Consumer
 	)
 
-	endpoint := c.BaseURL + "/v1/bunits/" + strconv.Itoa(bUnitID) + "/consumers"
+	// validate the base url to create the endpoint
+	path := "/v1/bunits/" + strconv.Itoa(bUnitID) + "/consumers"
+	baseURL, err := url.Parse(c.BaseURL)
+
+	if err != nil {
+		return Consumer{}, fmt.Errorf("error parsing base url: %s", err)
+	}
+
+	baseURL.Path = path
+	endpoint := baseURL.String()
+
 	name := map[string]string{
 		"Name": nodename,
 	}
@@ -50,9 +61,19 @@ func (c *AuthenticatedClient) CreateConsumer(bUnitID int, nodename string) (Cons
 }
 
 func (c *AuthenticatedClient) DeleteConsumer(bUnitID, consumerID int) error {
-	endpoint := c.BaseURL + "/v1/bunits/" + strconv.Itoa(bUnitID) + "/consumers/" + strconv.Itoa(consumerID)
 
-	_, err := c.apiRequest(endpoint, http.MethodDelete, nil)
+	// validate the base url to create the endpoint
+	path := "/v1/bunits/" + strconv.Itoa(bUnitID) + "/consumers/" + strconv.Itoa(consumerID)
+	baseURL, err := url.Parse(c.BaseURL)
+
+	if err != nil {
+		return fmt.Errorf("error parsing base url: %s", err)
+	}
+
+	baseURL.Path = path
+	endpoint := baseURL.String()
+
+	_, err = c.apiRequest(endpoint, http.MethodDelete, nil)
 	if err != nil {
 		return fmt.Errorf("error deleting consumer: %s", err)
 	}
@@ -65,7 +86,17 @@ func (c *AuthenticatedClient) GetConsumers(bUnitID int) ([]Consumer, error) {
 		list     consumers
 		consumer []Consumer
 	)
-	endpoint := c.BaseURL + "/v1/bunits/" + strconv.Itoa(bUnitID) + "/consumers"
+
+	// validate the base url to create the endpoint
+	path := "/v1/bunits/" + strconv.Itoa(bUnitID) + "/consumers"
+	baseURL, err := url.Parse(c.BaseURL)
+
+	if err != nil {
+		return nil, fmt.Errorf("error parsing base url: %s", err)
+	}
+
+	baseURL.Path = path
+	endpoint := baseURL.String()
 
 	resp, err := c.apiRequest(endpoint, http.MethodGet, nil)
 	if err != nil {

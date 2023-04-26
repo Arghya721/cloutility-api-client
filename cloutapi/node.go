@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 )
 
@@ -30,7 +31,16 @@ func (c *AuthenticatedClient) CreateNode(bUnitID, consumerID, osType, clientType
 		nodedata NodeData
 	)
 
-	endpoint := c.BaseURL + "/v1/bunits/" + strconv.Itoa(bUnitID) + "/consumers/" + strconv.Itoa(consumerID) + "/node"
+	// validate the base url to create the endpoint
+	path := "/v1/bunits/" + strconv.Itoa(bUnitID) + "/consumers/" + strconv.Itoa(consumerID) + "/node"
+	baseURL, err := url.Parse(c.BaseURL)
+
+	if err != nil {
+		return Node{}, fmt.Errorf("error parsing base url: %s", err)
+	}
+
+	baseURL.Path = path
+	endpoint := baseURL.String()
 
 	// Assign data
 	nodedata.Contact = contact
