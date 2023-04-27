@@ -11,8 +11,8 @@ import (
 const (
 	// Set the OS to Linux, ID = 3
 	osTypeID = int(3)
-	// Set the nodeType to Workstation, ID = 2
-	nodeTypeID = int(2)
+	// Set the nodeType to Fileserver, ID = 1
+	nodeTypeID = int(1)
 	// Use standard domain (180 Days backup retention), ID = 1
 	domainID = int(1)
 	// Set the clientOptionSet to "DEDUP_AND_COMPRESS", ID = 2
