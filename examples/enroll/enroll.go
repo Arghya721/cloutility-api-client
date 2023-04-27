@@ -22,7 +22,7 @@ const (
 )
 
 func main() {
-	// Get the hostname of the current Workstation
+	// Get the hostname of the current server
 	hostname, err := os.Hostname()
 	if err != nil {
 		panic(err)
