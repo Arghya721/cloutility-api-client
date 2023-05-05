@@ -8,8 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
-	"strconv"
 )
 
 type BusinessUnit struct {
@@ -30,24 +28,10 @@ func (c *AuthenticatedClient) DeleteBusinessUnit() error {
 	return nil
 }
 
-func (c *AuthenticatedClient) GetBusinessUnit(bunitID int) (BusinessUnit, error) {
+func (c *AuthenticatedClient) GetBusinessUnit(bUnitID int) (BusinessUnit, error) {
 	var bunit BusinessUnit
 
-	// validate the base url to create the endpoint
-	path := "/v1/bunits"
-	baseURL, err := url.Parse(c.BaseURL)
-	if err != nil {
-		return BusinessUnit{}, fmt.Errorf("error parsing base URL: %s", err)
-	}
-
-	query := url.Values{}
-	query.Set("bunitId", strconv.Itoa(bunitID))
-
-	// Append the query parameters to the URL
-	baseURL.Path = path
-	baseURL.RawQuery = query.Encode()
-	endpoint := baseURL.String()
-
+	endpoint := "/v1/bunits?bunitID=" + fmt.Sprintf("%d", bUnitID)
 	resp, err := c.apiRequest(endpoint, http.MethodGet, nil)
 	if err != nil {
 		return BusinessUnit{}, fmt.Errorf("error retrieving business units: %s", err)

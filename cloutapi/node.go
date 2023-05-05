@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
-	"strconv"
 )
 
 type Node struct {
@@ -32,15 +30,7 @@ func (c *AuthenticatedClient) CreateNode(bUnitID, consumerID, osType, clientType
 	)
 
 	// validate the base url to create the endpoint
-	path := "/v1/bunits/" + strconv.Itoa(bUnitID) + "/consumers/" + strconv.Itoa(consumerID) + "/node"
-	baseURL, err := url.Parse(c.BaseURL)
-
-	if err != nil {
-		return Node{}, fmt.Errorf("error parsing base url: %s", err)
-	}
-
-	baseURL.Path = path
-	endpoint := baseURL.String()
+	endpoint := "/v1/bunits/" + fmt.Sprintf("%d", bUnitID) + "/consumers/" + fmt.Sprintf("%d", consumerID) + "/node"
 
 	// Assign data
 	nodedata.Contact = contact
@@ -70,9 +60,7 @@ func (c *AuthenticatedClient) CreateNode(bUnitID, consumerID, osType, clientType
 func (c *AuthenticatedClient) DeleteNode(bUnitID, consumerID int) (Node, error) {
 	var node Node
 
-	endpoint := c.BaseURL + "/v1/bunits/" + strconv.Itoa(bUnitID) + "/consumers/" + strconv.Itoa(consumerID) + "/node?deleteAssociations=True"
-	fmt.Println(endpoint)
-
+	endpoint := "/v1/bunits/" + fmt.Sprintf("%d", bUnitID) + "/consumers/" + fmt.Sprintf("%d", consumerID) + "/node?deleteAssociations=True"
 	resp, err := c.apiRequest(endpoint, http.MethodDelete, nil)
 	if err != nil {
 		return Node{}, fmt.Errorf("error requesting nodedata: %s", err)
@@ -86,8 +74,7 @@ func (c *AuthenticatedClient) DeleteNode(bUnitID, consumerID int) (Node, error) 
 func (c *AuthenticatedClient) GetNode(bUnitID, consumerID int) (Node, error) {
 	var node Node
 
-	endpoint := c.BaseURL + "/v1/bunits/" + strconv.Itoa(bUnitID) + "/consumers/" + strconv.Itoa(consumerID) + "/node"
-
+	endpoint := "/v1/bunits/" + fmt.Sprintf("%d", bUnitID) + "/consumers/" + fmt.Sprintf("%d", consumerID) + "/node"
 	resp, err := c.apiRequest(endpoint, http.MethodGet, nil)
 	if err != nil {
 		return Node{}, fmt.Errorf("error requesting nodedata: %s", err)
@@ -104,13 +91,13 @@ func (c *AuthenticatedClient) ActivateNode(bUnitID, consumerID int) (Node, error
 		err  error
 	)
 
-	endpoint := c.BaseURL + "/v1/bunits/" + strconv.Itoa(bUnitID) + "/consumers/" + strconv.Itoa(consumerID) + "/node/spname"
+	endpoint := "/v1/bunits/" + fmt.Sprintf("%d", bUnitID) + "/consumers/" + fmt.Sprintf("%d", consumerID) + "/node/spname"
 	node.TsmName, err = c.apiRequest(endpoint, http.MethodGet, nil)
 	if err != nil {
 		return Node{}, fmt.Errorf("error retrieving nodename: %s", err)
 	}
 
-	endpoint = c.BaseURL + "/v1/bunits/" + strconv.Itoa(bUnitID) + "/consumers/" + strconv.Itoa(consumerID) + "/node/activate?tsmName=" + node.TsmName
+	endpoint = "/v1/bunits/" + fmt.Sprintf("%d", bUnitID) + "/consumers/" + fmt.Sprintf("%d", consumerID) + "/node/activate?tsmName=" + node.TsmName
 	_, err = c.apiRequest(endpoint, http.MethodGet, nil)
 	if err != nil {
 		return Node{}, fmt.Errorf("error activating node: %s", err)

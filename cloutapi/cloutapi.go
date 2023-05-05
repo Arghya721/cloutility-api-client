@@ -107,7 +107,12 @@ func (c *AuthenticatedClient) apiRequest(endpoint string, method string, payload
 		reader = bytes.NewReader(payload)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, method, endpoint, reader)
+	requestURL, err := url.ParseRequestURI(c.BaseURL + endpoint)
+	if err != nil {
+		return "", fmt.Errorf("error parsing request url: %s", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, method, requestURL.String(), reader)
 	if err != nil {
 		return "", fmt.Errorf("failed to complete request: %s", err)
 	}

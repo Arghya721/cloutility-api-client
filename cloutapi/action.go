@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 	"time"
 )
 
@@ -29,16 +28,7 @@ func (c *AuthenticatedClient) GetActions() ([]Action, error) {
 		action []Action
 	)
 
-	path := "/v1/actions"
-	baseURL, err := url.Parse(c.BaseURL)
-
-	if err != nil {
-		return nil, fmt.Errorf("error parsing base url: %s", err)
-	}
-
-	baseURL.Path = path
-	endpoint := baseURL.String()
-
+	endpoint := "/v1/actions"
 	resp, err := c.apiRequest(endpoint, http.MethodGet, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error requesting actions: %s", err)
@@ -55,16 +45,7 @@ func (c *AuthenticatedClient) GetActions() ([]Action, error) {
 func (c *AuthenticatedClient) GetAction(actionID int) (Action, error) {
 	var action Action
 
-	path := "/v1/actions/" + fmt.Sprintf("%d", actionID)
-	baseURL, err := url.Parse(c.BaseURL)
-
-	if err != nil {
-		return Action{}, fmt.Errorf("error parsing base url: %s", err)
-	}
-
-	baseURL.Path = path
-	endpoint := baseURL.String()
-
+	endpoint := "/v1/actions/" + fmt.Sprintf("%d", actionID)
 	resp, err := c.apiRequest(endpoint, http.MethodGet, nil)
 	if err != nil {
 		return Action{}, fmt.Errorf("error requesting action: %s", err)
