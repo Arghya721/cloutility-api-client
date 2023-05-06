@@ -1,4 +1,4 @@
-package cloutapi
+package cloutility
 
 import (
 	"encoding/json"

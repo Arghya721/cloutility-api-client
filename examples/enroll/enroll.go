@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/safespring-community/cloutility-api-client/cloutapi"
+	"github.com/safespring-community/cloutility-api-client/cloutility"
 )
 
 const (
@@ -29,7 +29,7 @@ func main() {
 	}
 
 	// Initilize client using predefined URL and environment variables
-	client, err := cloutapi.Init(
+	client, err := cloutility.Init(
 		context.Background(),
 		os.Getenv("CLIENT_ID"),
 		os.Getenv("APIKEY_ORIGIN"),
