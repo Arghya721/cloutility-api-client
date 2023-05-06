@@ -52,7 +52,7 @@ func (c *AuthenticatedClient) CreateConsumer(bUnitID int, nodename string) (Cons
 func (c *AuthenticatedClient) DeleteConsumer(bUnitID, consumerID int) error {
 
 	endpoint := "/v1/bunits/" + fmt.Sprintf("%d", bUnitID) + "/consumers/" + fmt.Sprintf("%d", consumerID)
-    _, err := c.apiRequest(endpoint, http.MethodDelete, nil)
+	_, err := c.apiRequest(endpoint, http.MethodDelete, nil)
 	if err != nil {
 		return fmt.Errorf("error deleting consumer: %s", err)
 	}
@@ -66,7 +66,7 @@ func (c *AuthenticatedClient) GetConsumers(bUnitID int) ([]Consumer, error) {
 		consumer []Consumer
 	)
 
-	endpoint := "/v1/bunits/" + fmt.Sprintf("%d",bUnitID) + "/consumers"
+	endpoint := "/v1/bunits/" + fmt.Sprintf("%d", bUnitID) + "/consumers"
 	resp, err := c.apiRequest(endpoint, http.MethodGet, nil)
 	if err != nil {
 		return []Consumer{}, fmt.Errorf("error retrieving consumers: %s", err)
