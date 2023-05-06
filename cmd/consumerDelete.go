@@ -5,7 +5,7 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"github.com/safespring-community/cloutility-api-client/cloutapi"
+	"github.com/safespring-community/cloutility-api-client/cloutility"
 	"github.com/spf13/cobra"
 )
 
@@ -23,7 +23,7 @@ backup node.
 }
 
 func consumerDelete() {
-	var selectedConsumer cloutapi.Consumer
+	var selectedConsumer cloutility.Consumer
 
 	twriter := new(tabwriter.Writer)
 	twriter.Init(os.Stdout, 8, 8, 1, '\t', 0)

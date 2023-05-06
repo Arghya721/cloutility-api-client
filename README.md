@@ -23,7 +23,7 @@ go get "github.com/safespring-community/cloutility-api-client"
 To query the API you need an authenticated client which is instansiated using:
 
 ```go
-	client, err := cloutapi.Init(
+	client, err := cloutility.Init(
 		context.Background(),
 		client_id,
 		client_origin,
@@ -36,7 +36,7 @@ To query the API you need an authenticated client which is instansiated using:
     }
 ```
 
-Where `client_id` is your Cloutility API key and `client_origin` is the url specified when creating the API key. `username` and `password` is the same credentials you would use to login to the cloutility portal. `baseurl` is the 
+Where `client_id` is your Cloutility API key and `client_origin` is the url specified when creating the API key. `username` and `password` is the same credentials you would use to login to the cloutility portal. `baseurl` is the
 
 You can then use the client to access the various endpoints of the API. For example, to get a list of all the consumers / consumption-units:
 
@@ -56,7 +56,7 @@ You can then use the client to access the various endpoints of the API. For exam
 The Cloutility API Client also includes a CLI client based on the Cobra library. To use the CLI, you can run the binary with the appropriate flags. For example, to get a list of all the consumers / consumption-units in the default business-unit:
 
 ```
-cloutility-api-client consumers list 
+cloutility-api-client consumers list
 ```
 
 The cli client will look for a configuration file in the same directory as the binary namned `cloutility-api-client.yaml`. There is an example configuration file included in the repository which may be used as base.

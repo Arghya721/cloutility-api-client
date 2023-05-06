@@ -22,7 +22,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/safespring-community/cloutility-api-client/cloutapi"
+	"github.com/safespring-community/cloutility-api-client/cloutility"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -39,7 +39,7 @@ var (
 	activate        bool
 	bunitId         int
 	cfgFile         string
-	client          *cloutapi.AuthenticatedClient
+	client          *cloutility.AuthenticatedClient
 	clientOptionSet int
 	clientType      int
 	consumerId      int
@@ -57,7 +57,7 @@ func Execute() {
 }
 
 func initCloutilityApi() {
-	c, err := cloutapi.Init(
+	c, err := cloutility.Init(
 		context.Background(),
 		viper.GetString("client_id"),
 		viper.GetString("client_origin"),
@@ -87,7 +87,7 @@ func initConfig() {
 
 func init() {
 	cobra.OnInitialize(initConfig, initCloutilityApi)
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is ./cloutility-api-client.properties)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is ./cloutility-api-client.yaml)")
 	// rootCmd.PersistentFlags().Bool("debug", false, "print debug information")
 	// rootCmd.PersistentFlags().Bool("dry-run", false, "do not actually create anything")
 

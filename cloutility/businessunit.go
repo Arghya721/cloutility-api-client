@@ -2,7 +2,7 @@
 // Their goal is to represent companies, divisions or any other meaningful
 // entity or logical group.
 
-package cloutapi
+package cloutility
 
 import (
 	"encoding/json"
