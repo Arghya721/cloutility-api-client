@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 )
 
 type User struct {
@@ -23,17 +22,7 @@ type UserBUnit struct {
 func (c *AuthenticatedClient) GetUser() (*User, error) {
 	var user User
 
-	// validate the base url to create the endpoint
-	path := "/v1/me"
-	baseURL, err := url.Parse(c.BaseURL)
-
-	if err != nil {
-		return nil, fmt.Errorf("error parsing base url: %s", err)
-	}
-
-	baseURL.Path = path
-	endpoint := baseURL.String()
-
+	endpoint := "/v1/me"
 	body, err := c.apiRequest(endpoint, http.MethodGet, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error requesting userdata: %s", err)

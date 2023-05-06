@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
-	"strconv"
 	"time"
 )
 
@@ -34,17 +32,7 @@ func (c *AuthenticatedClient) GetDomains(bUnitID int) ([]Domain, error) {
 		domains []Domain
 	)
 
-	// validate the base url to create the endpoint
-	path := "/v1/bunits/" + strconv.Itoa(bUnitID) + "/defaultserver/domains"
-	baseURL, err := url.Parse(c.BaseURL)
-
-	if err != nil {
-		return nil, fmt.Errorf("error parsing base url: %s", err)
-	}
-
-	baseURL.Path = path
-	endpoint := baseURL.String()
-
+	endpoint := "/v1/bunits/" + fmt.Sprintf("%d", bUnitID) + "/defaultserver/domains"
 	resp, err := c.apiRequest(endpoint, http.MethodGet, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error requesting domains: %s", err)

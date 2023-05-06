@@ -59,6 +59,10 @@ func Init(ctx context.Context, client_id, origin, username, password, baseURL st
 	c.Origin = origin
 
 	authurl := "/v1/oauth"
+	requestURL, err := url.ParseRequestURI(c.BaseURL + authurl)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing request url: %s", err)
+	}
 
 	// Construct body
 	loginData := url.Values{}
@@ -67,7 +71,7 @@ func Init(ctx context.Context, client_id, origin, username, password, baseURL st
 	loginData.Add("username", username)
 	loginData.Add("password", password)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.BaseURL+authurl, strings.NewReader(loginData.Encode()))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, requestURL.String(), strings.NewReader(loginData.Encode()))
 	if err != nil {
 		return nil, fmt.Errorf("error creating request: %v", err)
 	}
@@ -107,7 +111,12 @@ func (c *AuthenticatedClient) apiRequest(endpoint string, method string, payload
 		reader = bytes.NewReader(payload)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, method, endpoint, reader)
+	requestURL, err := url.ParseRequestURI(c.BaseURL + endpoint)
+	if err != nil {
+		return "", fmt.Errorf("error parsing request url: %s", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, method, requestURL.String(), reader)
 	if err != nil {
 		return "", fmt.Errorf("failed to complete request: %s", err)
 	}
