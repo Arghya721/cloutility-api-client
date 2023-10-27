@@ -29,7 +29,7 @@ func (c *AuthenticatedClient) GetClientOptionSet(bUnitID int) ([]ClientOptionSet
 	)
 
 	// validate the base url to create the endpoint
-	endpoint := "/v1/bunits" + fmt.Sprintf("%d", bUnitID) + "/defaultserver/clientoptionsets"
+	endpoint := "/v1/bunits/" + fmt.Sprintf("%d", bUnitID) + "/defaultserver/clientoptionsets"
 	resp, err := c.apiRequest(endpoint, http.MethodGet, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error requesting clientOptionSets: %s", err)
