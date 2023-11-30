@@ -9,26 +9,26 @@ import (
 
 type nodeOperatingSystems struct {
 	Href   string                `json:"href"`
-	Total  int                   `json:"total"`
-	Offset int                   `json:"offset"`
 	First  string                `json:"first"`
 	Items  []NodeOperatingSystem `json:"items"`
+	Total  int                   `json:"total"`
+	Offset int                   `json:"offset"`
 }
 
 type NodeOperatingSystem struct {
+	CreatedDate        time.Time            `json:"createdDate"`
 	Href               string               `json:"href"`
 	Name               string               `json:"name"`
 	ShortName          string               `json:"shortName"`
 	SupportedNodeTypes []supportedNodeTypes `json:"supportedNodeTypes"`
 	ID                 int                  `json:"id"`
-	CreatedDate        time.Time            `json:"createdDate"`
 }
 
 type supportedNodeTypes struct {
-	ID          int       `json:"id"`
-	Name        string    `json:"name"`
 	CreatedDate time.Time `json:"createdDate"`
+	Name        string    `json:"name"`
 	ShortName   string    `json:"shortName"`
+	ID          int       `json:"id"`
 }
 
 func (c *AuthenticatedClient) GetNodeOperatingSystem() ([]NodeOperatingSystem, error) {

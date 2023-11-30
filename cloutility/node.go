@@ -7,19 +7,19 @@ import (
 )
 
 type Node struct {
-	ID          int    `json:"id"`
 	Name        string `json:"name"`
 	Href        string `json:"href"`
 	TsmName     string `json:"tsmName"`
 	TsmPassword string `json:"tsmPassword"`
+	ID          int    `json:"id"`
 }
 
 type NodeData struct {
 	OperatingSystem NodeOperatingSystem
 	Type            NodeType
-	Domain          Domain
-	ClientOptionSet ClientOptionSet
 	Contact         string
+	ClientOptionSet ClientOptionSet
+	Domain          Domain
 	CpuCount        int
 }
 

@@ -9,18 +9,18 @@ import (
 
 type nodeTypes struct {
 	Href   string     `json:"href"`
-	Total  int        `json:"total"`
-	Offset int        `json:"offset"`
 	First  string     `json:"first"`
 	Items  []NodeType `json:"items"`
+	Total  int        `json:"total"`
+	Offset int        `json:"offset"`
 }
 
 type NodeType struct {
+	CreatedDate time.Time `json:"createdDate"`
 	Href        string    `json:"href"`
-	ID          int       `json:"id"`
 	Name        string    `json:"name"`
 	ShortName   string    `json:"shortName"`
-	CreatedDate time.Time `json:"createdDate"`
+	ID          int       `json:"id"`
 }
 
 func (c *AuthenticatedClient) GetNodeType() ([]NodeType, error) {

@@ -34,15 +34,15 @@ type AuthenticatedClient struct {
 	Origin       string
 	AccessToken  string `json:"access_token"`
 	TokenType    string `json:"token_type"`
-	Expires      int    `json:"expires_in"`
 	RefreshToken string `json:"refresh_token"`
+	Expires      int    `json:"expires_in"`
 }
 
 type ErrorResponse struct {
-	Status           int    `json:"status"`
 	Code             string `json:"code"`
 	Message          string `json:"message"`
 	DeveloperMessage string `json:"developerMessage"`
+	Status           int    `json:"status"`
 }
 
 // Initialize client and return an AuthenticatedClient

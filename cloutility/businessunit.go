@@ -11,13 +11,12 @@ import (
 )
 
 type BusinessUnit struct {
-	ID             int            `json:"id"`
 	Name           string         `json:"name"`
 	GroupName      string         `json:"groupName"`
-	ReportRemotely bool           `json:"reportRemotely"`
 	BusinessUnits  []BusinessUnit `json:"businessUnits"`
+	ID             int            `json:"id"`
 	InvoiceDay     int            `json:"invoiceDay"`
-	// Tags           []any          `json:"tags"`
+	ReportRemotely bool           `json:"reportRemotely"`
 }
 
 func (c *AuthenticatedClient) CreateBusinessUnit() error {

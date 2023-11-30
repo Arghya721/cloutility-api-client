@@ -9,17 +9,17 @@ import (
 
 type clientOptionSets struct {
 	Href   string            `json:"href"`
-	Total  int               `json:"total"`
-	Offset int               `json:"offset"`
 	First  string            `json:"first"`
 	Items  []ClientOptionSet `json:"items"`
+	Total  int               `json:"total"`
+	Offset int               `json:"offset"`
 }
 
 type ClientOptionSet struct {
+	CreatedDate time.Time `json:"createdDate"`
 	Href        string    `json:"href"`
 	Name        string    `json:"name"`
 	ID          int       `json:"id"`
-	CreatedDate time.Time `json:"createdDate"`
 }
 
 func (c *AuthenticatedClient) GetClientOptionSet(bUnitID int) ([]ClientOptionSet, error) {

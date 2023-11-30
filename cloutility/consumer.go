@@ -9,17 +9,17 @@ import (
 
 type consumers struct {
 	Href     string     `json:"href"`
-	Total    int        `json:"total"`
-	Offset   int        `json:"offset"`
 	First    string     `json:"first"`
 	Consumer []Consumer `json:"items"`
+	Total    int        `json:"total"`
+	Offset   int        `json:"offset"`
 }
 
 type Consumer struct {
 	CreatedDate time.Time `json:"createdDate"`
 	Href        string    `json:"href"`
-	ID          int       `json:"id"`
 	Name        string    `json:"name"`
+	ID          int       `json:"id"`
 }
 
 func (c *AuthenticatedClient) CreateConsumer(bUnitID int, nodename string) (Consumer, error) {
@@ -50,7 +50,6 @@ func (c *AuthenticatedClient) CreateConsumer(bUnitID int, nodename string) (Cons
 }
 
 func (c *AuthenticatedClient) DeleteConsumer(bUnitID, consumerID int) error {
-
 	endpoint := "/v1/bunits/" + fmt.Sprintf("%d", bUnitID) + "/consumers/" + fmt.Sprintf("%d", consumerID)
 	_, err := c.apiRequest(endpoint, http.MethodDelete, nil)
 	if err != nil {

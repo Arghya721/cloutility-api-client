@@ -9,21 +9,21 @@ import (
 
 type domains struct {
 	Href   string   `json:"href"`
-	Total  int      `json:"total"`
-	Offset int      `json:"offset"`
 	First  string   `json:"first"`
 	Items  []Domain `json:"items"`
+	Total  int      `json:"total"`
+	Offset int      `json:"offset"`
 }
 
 type Domain struct {
+	CreatedDate      time.Time `json:"createdDate"`
 	Href             string    `json:"href"`
 	Name             string    `json:"name"`
 	Description      string    `json:"description"`
 	BackupRetention  int       `json:"backupRetention"`
 	ArchiveRetention int       `json:"archiveRetention"`
-	MissingInTsm     bool      `json:"missingInTsm"`
 	ID               int       `json:"id"`
-	CreatedDate      time.Time `json:"createdDate"`
+	MissingInTsm     bool      `json:"missingInTsm"`
 }
 
 func (c *AuthenticatedClient) GetDomains(bUnitID int) ([]Domain, error) {

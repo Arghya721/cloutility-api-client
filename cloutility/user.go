@@ -7,16 +7,16 @@ import (
 )
 
 type User struct {
+	UserBUnit UserBUnit `json:"businessUnit"`
 	Href      string    `json:"href"`
+	Name      string    `json:"name"`
 	ID        int       `json:"id"`
 	Locked    bool      `json:"locked"`
-	Name      string    `json:"name"`
-	UserBUnit UserBUnit `json:"businessUnit"`
 }
 
 type UserBUnit struct {
-	ID   int    `json:"id"`
 	Name string `json:"name"`
+	ID   int    `json:"id"`
 }
 
 func (c *AuthenticatedClient) GetUser() (*User, error) {
